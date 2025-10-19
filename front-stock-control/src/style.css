@@ -1,0 +1,71 @@
+@import "tailwindcss";
+
+@theme static {
+  /* 🎨 Colores personalizados */
+  --color-primary: #5D87FF;
+  --color-secondary: #49BEFF;
+  --color-accent: #13DEB9;
+  --color-warning: #FA896B;
+  --color-info: #539BFF;
+  --color-danger: #FF5C8E;
+  --color-success: #00C292;
+
+  --color-background: #f6f9fc;
+  --color-card: #ffffff;
+  --color-border: #e5e7eb;
+
+  --color-text-base: #1e293b;
+  --color-text-muted: #64748b;
+  --color-text-inverted: #ffffff;
+
+  --color-gray-50:  #f9fafb;
+  --color-gray-100: #f1f5f9;
+  --color-gray-200: #e2e8f0;
+  --color-gray-300: #cbd5e1;
+  --color-gray-400: #94a3b8;
+  --color-gray-500: #64748b;
+  --color-gray-600: #475569;
+  --color-gray-700: #334155;
+  --color-gray-800: #1e293b;
+  --color-gray-900: #0f172a;
+
+  /* 🅰️ Tipografía */
+  --font-sans: Inter, system-ui, sans-serif;
+
+  /* 📏 Tamaños de fuente */
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+
+  /* 🧱 Peso de fuente */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* 🟦 Bordes */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+
+  /* 🌫️ Sombras */
+  --shadow-card: 0 4px 8px rgba(0, 0, 0, 0.03);
+  --shadow-input: 0 1px 2px rgba(0, 0, 0, 0.04);
+
+  /* 📐 Espaciados */
+  --spacing-section: 2rem;
+  --spacing-card: 1.25rem;
+  --spacing-form-gap: 1rem;
+  --spacing-grid-gap: 1.5rem;
+
+  /* 📏 Dimensiones */
+  --max-width-container: 1280px;
+  --height-navbar: 4rem;
+  --width-sidebar: 16rem;
+}
