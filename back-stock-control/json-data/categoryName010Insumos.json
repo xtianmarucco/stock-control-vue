@@ -1,0 +1,48 @@
+[
+  {
+    "productPresentationId": 5593,
+    "imgSmall": "https://s3-us-west-2.amazonaws.com/ceekhelacor.allpickcloud.com/Logo+Grido.png",
+    "brandName": "GRIDO",
+    "productPresentationName": "PALLET LIVIANO P/ INSUMOS 700 KG- 1000 x",
+    "categoryName": "010- INSUMOS",
+    "categoryVisible": 1,
+    "productsId": 49279147,
+    "categoryId": 151,
+    "brandsId": 31,
+    "productSKU": "6003200",
+    "distributorSupplierId": 4,
+    "distributorSupplierName": "MUNDO HELADO S.A.",
+    "productSummary": "PALLET LIVIANO P/ INSUMOS 700 KG- 1000 x",
+    "productTitle": "PALLET LIVIANO P/ INSUMOS 700 KG- 1000 x",
+    "supplierId": 4,
+    "supplierName": "MUNDO HELADO S.A.",
+    "warehouseId": 2703920,
+    "warehouseName": "2027;2027",
+    "weight": 20,
+    "volume": null,
+    "isCombo": 0,
+    "isPallet": 1,
+    "baseId": null,
+    "volumeBases": null,
+    "volumeMonoproducto": null,
+    "isMonoproducto": 0,
+    "quantityPackagePallets": null,
+    "purchaseType": [
+      {
+        "productPresentationId": 5593,
+        "purchaseTypeId": 2,
+        "supplierId": 4,
+        "distributorSupplierId": 4,
+        "purchaseTypeName": "Compra Consolidada",
+        "presentationId": 22,
+        "presentationName": "Bulto",
+        "stock": 3173,
+        "noStock": 0,
+        "price": 7200,
+        "warehouseId": 2703920,
+        "pendingOrders": false
+      }
+    ],
+    "hasRelatedVolume": false
+  }
+]
