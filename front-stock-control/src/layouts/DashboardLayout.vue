@@ -34,8 +34,8 @@
           class="grid grid-cols-1 md:grid-cols-2 gap-[var(--spacing-grid-gap)]"
         >
           <!-- Placeholder para gráfico circular -->
-          <DonutChartBranch :branchId="1" branchName="Sucursal A" />
-          <DonutChartBranch :branchId="2" branchName="Sucursal B" />
+          <BranchStockDonut :branch-id="1" branch-name="Castelli" />
+<BranchStockDonut :branch-id="2" branch-name="Diagonal" />
 
           <!-- Otro contenido opcional -->
           <div
@@ -57,8 +57,7 @@
 import Navbar from "../components/navbar/Navbar.vue";
 import Sidebar from "../components/sidebar/Sidebar.vue";
 import DashboardCard from "../components/dashboard-card/DashboardCard.vue";
-import DonutChartBranch from "../components/donut-chart-branch/DonutChartBranch.vue";
-
+import BranchStockDonut from "../components/branch-stock-donut/BranchStockDonut.vue";
 // Datos de prueba para el gráfico
 const donutData = {
   labels: ["Sucursal A", "Sucursal B"],

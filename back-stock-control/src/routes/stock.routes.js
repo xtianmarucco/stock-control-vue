@@ -3,6 +3,8 @@ const router = express.Router();
 const pool = require('../db');
 
 // GET /api/stock
+
+
 router.get('/', async (req, res) => {
   try {
     const result = await pool.query(`
