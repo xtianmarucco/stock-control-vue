@@ -16,3 +16,9 @@ export const getProductsWithStock = async () => {
   const res = await axios.get(`${API_URL}/with-stock`)
   return res.data
 }
+export const getAllCategories = async () => {
+  const res = await axios.get(API_URL)
+  // Derivamos las categorías únicas de los productos
+  const categories = [...new Set(res.data.map(p => p.category_id || p.category_name))].filter(Boolean)
+  return categories
+}
