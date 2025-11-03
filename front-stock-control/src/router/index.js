@@ -12,18 +12,19 @@ const routes = [
     name: 'Dashboard',
     component: Dashboard
   },
-  {
-  path: '/products',
-  
-  component: () => import('../layouts/ProductsLayout.vue'),
-  children: [
-    {
-      path: '',
-      name: 'ProductsTableView',
-      component: () => import('../views/ProductsTableView.vue')
+{
+      path: '/branches/:branchId/products',
+      component: () => import('../layouts/ProductsLayout.vue'),
+      children: [
+        {
+          path: '',
+          name: 'BranchProducts',
+          component: () => import('../views/ProductsTableView.vue'),
+          props: route => ({ branchId: Number(route.params.branchId) })
+        }
+      ]
     }
-  ]
-}
+ 
 ]
 
 const router = createRouter({

@@ -1,24 +1,18 @@
 <template>
-  <DashboardLayout>
-    <div class="flex flex-col gap-6 bg-gray-50 min-h-full">
-      <header
-        class="border-b bg-white shadow-sm px-6 py-4 flex flex-col gap-1 md:flex-row md:justify-between md:items-center"
-      >
-        <h1 class="text-2xl font-semibold text-gray-800">
-          Gestión de Productos
-        </h1>
-        <p class="text-sm text-gray-500">
-          Visualización general del stock y filtrado por categoría
-        </p>
-      </header>
+  <div class="flex h-screen bg-[var(--color-background)] text-[var(--color-text-base)]">
+    <Sidebar class="w-[var(--width-sidebar)] shrink-0" />
+    <div class="flex flex-col flex-1 overflow-hidden">
+      <Navbar class="h-[var(--height-navbar)] border-b border-[var(--color-border)]" />
 
-      <section class="p-6 bg-white rounded-lg shadow-sm">
-        <RouterView />
-      </section>
+      <!-- Contenido específico de productos -->
+      <main class="flex-1 overflow-y-auto p-[var(--spacing-section)] bg-gray-50">
+        <router-view />
+      </main>
     </div>
-  </DashboardLayout>
+  </div>
 </template>
 
 <script setup>
-import DashboardLayout from '../layouts/DashboardLayout.vue'
+import Navbar from '../components/navbar/Navbar.vue'
+import Sidebar from '../components/sidebar/Sidebar.vue'
 </script>

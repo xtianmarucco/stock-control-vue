@@ -1,36 +1,20 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../db');
 
-// GET /api/branches
-router.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM branches ORDER BY name');
-    res.json(result.rows);
-  } catch (error) {
-    console.error('❌ Error fetching branches:', error);
-    res.status(500).json({ error: 'Error fetching branches' });
-  }
-});
-
-// Importar el controlador que acabamos de crear
+// Importar los controladores necesarios
 const {
+  getAllBranches,
   getStockSummaryByCategory,
+  getStockByBranch,
 } = require('../controllers/branches.controller');
 
-// Ruta original: GET /api/branches
-router.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM branches ORDER BY name');
-    res.json(result.rows);
-  } catch (error) {
-    console.error('❌ Error fetching branches:', error);
-    res.status(500).json({ error: 'Error fetching branches' });
-  }
-});
+// Ruta para obtener todas las branches
+router.get('/', getAllBranches);
 
-// ✅ Nueva ruta: GET /api/branches/:id/stock-summary-by-category
+// Ruta para obtener el resumen de stock por categoría de una branch específica
 router.get('/:id/stock-summary-by-category', getStockSummaryByCategory);
 
+// Nueva ruta para obtener el stock detallado de una branch específica
+router.get('/:id/stock', getStockByBranch);
 
 module.exports = router;

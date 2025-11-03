@@ -35,37 +35,36 @@
 
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
-import { getProductsWithStock, getProductsByCategory } from '../../services/ProductService'
+import { getProductsWithStock, getProductsByCategory, getProductsByBranch } from '../../services/ProductService'
 
 const props = defineProps({
+  branchId: { type: Number, required: true },
   category: String,
   search: String
-})
+});
 
 const products = ref([])
 const loading = ref(true)
 
 const fetchProducts = async () => {
-  loading.value = true
+  loading.value = true;
   try {
-    products.value = props.category
-      ? await getProductsByCategory(props.category)
-      : await getProductsWithStock()
+    products.value = await getStockByBranch(props.branchId, props.category || null);
   } catch (err) {
-    console.error('Error fetching products:', err)
+    console.error('Error fetching products:', err);
+    products.value = [];
   } finally {
-    loading.value = false
+    loading.value = false;
   }
-}
+};
 
-onMounted(fetchProducts)
-watch(() => props.category, fetchProducts)
 
-// Filtro por texto
+onMounted(fetchProducts);
+watch([() => props.branchId, () => props.category], fetchProducts);
+
 const filteredProducts = computed(() => {
-  if (!props.search) return products.value
-  return products.value.filter(p =>
-    p.name.toLowerCase().includes(props.search.toLowerCase())
-  )
-})
+  if (!props.search) return products.value;
+  const q = props.search.toLowerCase();
+  return products.value.filter(p => p.name?.toLowerCase().includes(q));
+});
 </script>

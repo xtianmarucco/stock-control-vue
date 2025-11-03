@@ -22,3 +22,23 @@ export const getAllCategories = async () => {
   const categories = [...new Set(res.data.map(p => p.category_id || p.category_name))].filter(Boolean)
   return categories
 }
+export const getProductsByBranch = async (branchId) => {
+  const res = await axios.get(`${API_URL}/branch/${branchId}`)
+  return res.data
+}
+
+export const getProductsByBranchAndCategory = async (branchId, category) => {
+  const res = await axios.get(`${API_URL}/branch/${branchId}/category/${category}`)
+  return res.data
+}
+
+const BASE_URL = 'http://localhost:3000/api/branches'
+
+
+export const getStockByBranch = async (branchId, category = null) => {
+  const url = `${BASE_URL}/${branchId}/stock`
+  const res = await axios.get(url, {
+    params: category ? { category } : {}
+  })
+  return res.data
+}
