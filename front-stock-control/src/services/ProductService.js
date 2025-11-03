@@ -36,9 +36,10 @@ const BASE_URL = 'http://localhost:3000/api/branches'
 
 
 export const getStockByBranch = async (branchId, category = null) => {
-  const url = `${BASE_URL}/${branchId}/stock`
-  const res = await axios.get(url, {
-    params: category ? { category } : {}
-  })
-  return res.data
+  const url = category
+    ? `http://localhost:3000/api/branches/${branchId}/stock?category=${encodeURIComponent(category)}`
+    : `http://localhost:3000/api/branches/${branchId}/stock`
+
+  const res = await axios.get(url)
+  return res.data // ahora devuelve { branch, products }
 }

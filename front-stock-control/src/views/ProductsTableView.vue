@@ -33,7 +33,15 @@
 
     <!-- COLUMNA DERECHA: Tabla -->
     <section class="flex-1 bg-white rounded-xl shadow p-6">
-      <h2 class="text-2xl font-semibold mb-4">Gestión de Productos</h2>
+      <!-- ✅ Cabecera dinámica -->
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-2xl font-semibold">
+          Gestión de Productos
+          <span v-if="branchName" class="text-blue-600 font-normal text-lg">
+            — {{ branchName }}
+          </span>
+        </h2>
+      </div>
 
       <!-- Barra de búsqueda -->
       <div class="flex items-center mb-4">
@@ -82,27 +90,43 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, computed, watch, computed as c } from 'vue'
 import { useRoute } from 'vue-router'
 import { getStockByBranch } from '../services/ProductService.js'
 import { getStockSummaryByCategory } from '../services/stockService.js'
+import { getBranchById } from '../services/BranchService.js' // ✅ Nuevo servicio
 
-// 📍 Obtenemos el branchId desde la URL
 const route = useRoute()
-const branchId = Number(route.params.branchId)
 
-// 🔄 Estados reactivoss
+// ✅ branchId reactivo
+const branchId = c(() => Number(route.params.branchId))
+
+// 🔄 Estados
+const branchName = ref('')
 const products = ref([])
 const categories = ref([])
 const selectedCategory = ref(null)
 const searchTerm = ref('')
 const loading = ref(false)
 
+// 🚀 Cargar nombre de la branch
+const fetchBranchName = async () => {
+  try {
+    const data = await getBranchById(branchId.value)
+    branchName.value = data.name
+  } catch (err) {
+    console.error('❌ Error fetching branch name:', err)
+    branchName.value = ''
+  }
+}
+
 // 🚀 Cargar productos del branch
 const fetchProducts = async () => {
   loading.value = true
   try {
-    products.value = await getStockByBranch(branchId, selectedCategory.value)
+    const response = await getStockByBranch(branchId.value, selectedCategory.value)
+    branchName.value = response.branch.name       // ✅ acá obtenés el nombre
+    products.value = response.products
   } catch (err) {
     console.error('❌ Error fetching products:', err)
     products.value = []
@@ -111,10 +135,10 @@ const fetchProducts = async () => {
   }
 }
 
-// 🚀 Cargar categorías (usamos el mismo endpoint del donut)
+// 🚀 Cargar categorías del branch
 const fetchCategories = async () => {
   try {
-    const data = await getStockSummaryByCategory(branchId)
+    const data = await getStockSummaryByCategory(branchId.value)
     categories.value = data.map(item => item.category)
   } catch (err) {
     console.error('❌ Error fetching categories:', err)
@@ -137,12 +161,16 @@ const selectCategory = (cat) => {
 // 👀 Watchers
 watch([selectedCategory], fetchProducts)
 
+// ✅ Reaccionar a cambios de branchId
+watch(branchId, async (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    console.log('🔁 Branch changed:', newVal)
+    await Promise.all([fetchBranchName(), fetchCategories(), fetchProducts()])
+  }
+})
+
 // 🧠 Montaje inicial
 onMounted(async () => {
-  await Promise.all([fetchCategories(), fetchProducts()])
+  await Promise.all([fetchBranchName(), fetchCategories(), fetchProducts()])
 })
 </script>
-
-<style scoped>
-/* estilos opcionales para armonizar con el dashboard */
-</style>

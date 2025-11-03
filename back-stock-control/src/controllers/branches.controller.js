@@ -39,12 +39,43 @@ const getAllBranches = async (req, res) => {
   }
 };
 
+const getBranchById = async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      'SELECT id, name, address FROM branches WHERE id = $1',
+      [id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Branch not found' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('❌ Error fetching branch by id:', error);
+    res.status(500).json({ error: 'Error fetching branch by id' });
+  }
+};
+
 // 📦 Tabla: stock detallado por branch (+ filtro opcional por categoría)
 const getStockByBranch = async (req, res) => {
   const { id } = req.params;
   const { category } = req.query;
 
   try {
+    const branchResult = await pool.query(
+      `SELECT id, name FROM branches WHERE id = $1`,
+      [id]
+    );
+
+    if (branchResult.rowCount === 0) {
+      return res.status(404).json({ error: 'Branch not found' });
+    }
+
+    const branchInfo = branchResult.rows[0];
+
     let query = `
       SELECT 
         p.id,
@@ -73,7 +104,10 @@ const getStockByBranch = async (req, res) => {
       total: Number(row.stock_total)
     }));
 
-    res.json(data);
+    res.json({
+      branch: { id: Number(branchInfo.id), name: branchInfo.name },
+      products: data
+    })
   } catch (error) {
     console.error('❌ Error fetching stock by branch:', error);
     res.status(500).json({ error: 'Error fetching stock by branch' });
@@ -83,5 +117,6 @@ const getStockByBranch = async (req, res) => {
 module.exports = {
   getStockSummaryByCategory,
   getAllBranches,
+  getBranchById,
   getStockByBranch
 };
