@@ -7,6 +7,27 @@ const pool = require('../db');
 const createStockMovement = async (req, res) => {
   const { from_branch_id, to_branch_id, movement_type, reason, items } = req.body;
 
+  // Paso 1: Extraer todos los product_id del payload
+const productIds = items.map(item => item.product_id);
+
+// Paso 2: Verificar si existen en la tabla products
+const verifyQuery = `
+  SELECT id FROM products WHERE id = ANY($1)
+`;
+const verifyResult = await pool.query(verifyQuery, [productIds]);
+
+const foundIds = verifyResult.rows.map(row => row.id);
+
+// Paso 3: Comparar: ¿faltan algunos?
+const missingIds = productIds.filter(id => !foundIds.includes(id));
+
+if (missingIds.length > 0) {
+  return res.status(400).json({
+    error: 'Uno o más productos no existen',
+    missing_product_ids: missingIds
+  });
+}
+
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ error: 'No items provided' });
   }
@@ -67,9 +88,99 @@ const createStockMovement = async (req, res) => {
     client.release();
   }
 };
+/**
+ * GET /api/stock-movements
+ * Devuelve movimientos de stock con filtros opcionales:
+ * - branch_id (como origen o destino)
+ * - type
+ * - from / to (rango de fechas)
+ */
+const getStockMovements = async (req, res) => {
+  const { branch_id, type, from, to } = req.query;
+  const values = [];
+  const conditions = [];
 
+  // Si se pasa branch_id, filtramos por origen o destino
+  if (branch_id) {
+    conditions.push('(m.from_branch_id = $1 OR m.to_branch_id = $1)');
+    values.push(branch_id);
+  }
+
+  // Si se pasa type (TRANSFER, ADJUSTMENT...), lo filtramos
+  if (type) {
+    conditions.push(`m.movement_type = $${values.length + 1}`);
+    values.push(type);
+  }
+
+  // Filtrar desde una fecha específica (inclusive)
+  if (from) {
+    conditions.push(`m.created_at >= $${values.length + 1}`);
+    values.push(from);
+  }
+
+  // Filtrar hasta una fecha específica (inclusive, todo el día)
+  if (to) {
+    // Esta línea hace que el filtro incluya todo el día (hasta las 23:59:59)
+    conditions.push(`m.created_at < $${values.length + 1}::date + interval '1 day'`);
+    values.push(to);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const query = `
+    SELECT 
+      m.id AS movement_id,
+      m.from_branch_id,
+      m.to_branch_id,
+      m.movement_type,
+      m.reason,
+      m.created_at,
+      i.product_id,
+      p.name AS product_name,
+      i.quantity
+    FROM stock_movements m
+    JOIN stock_movement_items i ON i.movement_id = m.id
+    JOIN products p ON p.id = i.product_id
+    ${whereClause}
+    ORDER BY m.created_at DESC;
+  `;
+
+  try {
+    const result = await pool.query(query, values);
+
+    // Agrupar por movimiento
+    const grouped = {};
+
+    result.rows.forEach(row => {
+      const id = row.movement_id;
+      if (!grouped[id]) {
+        grouped[id] = {
+          id,
+          from_branch_id: row.from_branch_id,
+          to_branch_id: row.to_branch_id,
+          movement_type: row.movement_type,
+          reason: row.reason,
+          created_at: row.created_at,
+          items: []
+        };
+      }
+
+      grouped[id].items.push({
+        product_id: row.product_id,
+        product_name: row.product_name,
+        quantity: row.quantity
+      });
+    });
+
+    res.json(Object.values(grouped));
+  } catch (error) {
+    console.error('❌ Error fetching stock movements:', error.message);
+    res.status(500).json({ error: 'Error fetching stock movements' });
+  }
+};
 console.log('✅ stockMovements routes loaded');
 
 module.exports = {
   createStockMovement,
+  getStockMovements,
 };
