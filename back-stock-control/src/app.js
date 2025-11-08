@@ -12,13 +12,14 @@ app.use(express.json());
 
 // 👉 Importar las rutas de branches
 const branchesRoutes = require('./routes/branches.routes');
-
+const stockMovementsRoutes = require('./routes/stockMovements.routes');
 // 👉 Registrar rutas bajo /api/branches
 app.use('/api/branches', branchesRoutes);
-
+app.use('/api/stock-movements', stockMovementsRoutes);
 // Si tenés más rutas generales, podés agregarlas aquí:
 // const otherRoutes = require('./routes/other.routes');
 // app.use('/api/other', otherRoutes);
+
 
 // Ruta base opcional para verificar el estado del servidor
 app.get('/', (req, res) => {

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-6 p-6 bg-gray-50 min-h-screen">
+  <div class="flex gap-6 p-6 bg-gray-50 min-h-screen bg-white shadow p-6">
     <!-- COLUMNA IZQUIERDA: Categorías -->
     <aside class="w-64 flex-shrink-0">
       <h2 class="text-lg font-semibold mb-3">Categorías</h2>
