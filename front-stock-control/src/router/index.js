@@ -23,8 +23,19 @@ const routes = [
           props: route => ({ branchId: Number(route.params.branchId) })
         }
       ]
+    },
+
+ {
+  path: '/movements',
+  component: () => import('../layouts/MovementsLayout.vue'),
+  children: [
+    {
+      path: '',
+      name: 'StockMovementsView',
+      component: () => import('../views/StockMovementsView.vue')
     }
- 
+  ]
+}
 ]
 
 const router = createRouter({

@@ -178,9 +178,56 @@ const getStockMovements = async (req, res) => {
     res.status(500).json({ error: 'Error fetching stock movements' });
   }
 };
+
+/**
+ * GET /api/stock-movements/:id
+ * Devuelve un movimiento de stock específico por su ID.
+ */
+const getStockMovementById = async (req, res) => {
+  const { id } = req.params;
+
+  const query = `
+    SELECT 
+      m.id,
+      m.from_branch_id,
+      from_b.name as from_branch_name,
+      m.to_branch_id,
+      to_b.name as to_branch_name,
+      m.movement_type,
+      m.reason,
+      m.created_at,
+      json_agg(json_build_object(
+        'product_id', i.product_id,
+        'product_name', p.name,
+        'quantity', i.quantity
+      )) as items
+    FROM stock_movements m
+    LEFT JOIN branches from_b ON from_b.id = m.from_branch_id
+    LEFT JOIN branches to_b ON to_b.id = m.to_branch_id
+    JOIN stock_movement_items i ON i.movement_id = m.id
+    JOIN products p ON p.id = i.product_id
+    WHERE m.id = $1
+    GROUP BY m.id, from_b.name, to_b.name;
+  `;
+
+  try {
+    const { rows } = await pool.query(query, [id]);
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Stock movement not found' });
+    }
+
+    res.json(rows[0]);
+  } catch (error) {
+    console.error('❌ Error fetching stock movement by ID:', error.message);
+    res.status(500).json({ error: 'Error fetching stock movement' });
+  }
+};
+
 console.log('✅ stockMovements routes loaded');
 
 module.exports = {
   createStockMovement,
   getStockMovements,
+  getStockMovementById,
 };

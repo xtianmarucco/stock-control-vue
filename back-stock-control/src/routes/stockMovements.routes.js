@@ -1,9 +1,14 @@
-const express = require('express');
-const router = express.Router();
-const { createStockMovement,getStockMovements } = require('../controllers/stockMovements.controller');
-console.log('✅ stockMovements routes loaded');
+const { Router } = require('express');
+const {
+  createStockMovement,
+  getStockMovements,
+  getStockMovementById,
+} = require('../controllers/stockMovements.controller');
+
+const router = Router();
+
+router.get('/', getStockMovements);
 router.post('/', createStockMovement);
-router.get("/", getStockMovements);
-console.log('✅ stockMovements routes loaded');
+router.get('/:id', getStockMovementById); // <--- Esta es la ruta que faltaba
 
 module.exports = router;

@@ -43,7 +43,7 @@
       </SidebarItem>
 
       <SidebarItem icon="flask-conical" label="Insumos" />
-      <SidebarItem icon="repeat" label="Movimientos" />
+      <SidebarItem icon="repeat" label="Movimientos" to="/movements" />
       <SidebarItem icon="bar-chart-3" label="Reportes" />
     </nav>
 
