@@ -1,131 +1,186 @@
 const pool = require('../db');
 
 /**
+ * Razones permitidas por tipo de movimiento
+ */
+const allowedReasons = {
+  ADJUSTMENT: ['EXPIRED', 'BROKEN', 'BOX_FINISHED'],
+  INTERNAL: ['SUPPLIER_UNLOAD', 'OTHER_INCOME'],
+  TRANSFER: [] // no aplica
+};
+
+/**
  * POST /api/stock-movements
  * Registra un movimiento de stock con múltiples productos
  */
 const createStockMovement = async (req, res) => {
-  const { from_branch_id, to_branch_id, movement_type, reason, items } = req.body;
+  const {
+    from_branch_id,
+    to_branch_id,
+    movement_type,
+    reason_category,
+    reason,
+    items
+  } = req.body;
 
-  // Paso 1: Extraer todos los product_id del payload
-const productIds = items.map(item => item.product_id);
-
-// Paso 2: Verificar si existen en la tabla products
-const verifyQuery = `
-  SELECT id FROM products WHERE id = ANY($1)
-`;
-const verifyResult = await pool.query(verifyQuery, [productIds]);
-
-const foundIds = verifyResult.rows.map(row => row.id);
-
-// Paso 3: Comparar: ¿faltan algunos?
-const missingIds = productIds.filter(id => !foundIds.includes(id));
-
-if (missingIds.length > 0) {
-  return res.status(400).json({
-    error: 'Uno o más productos no existen',
-    missing_product_ids: missingIds
-  });
-}
-
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'No items provided' });
+  // Validación básica
+  if (!movement_type || !Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({
+      error: 'Movement type and at least one item are required.'
+    });
   }
 
-  const client = await pool.connect();
+  // Validación de tipo
+  const allowed = allowedReasons[movement_type];
+  if (!allowed && allowed !== []) {
+    return res.status(400).json({ error: `Invalid movement_type: ${movement_type}` });
+  }
+
+  // Validación de reason_category para TRANSFER
+  if (movement_type === 'TRANSFER' && reason_category) {
+    return res.status(400).json({
+      error: 'reason_category should not be provided for TRANSFER movements.'
+    });
+  }
+
+  // Validación reason_category para ADJUSTMENT o INTERNAL
+  if ((movement_type === 'ADJUSTMENT' || movement_type === 'INTERNAL') &&
+    !allowed.includes(reason_category)) {
+    return res.status(400).json({
+      error: `Invalid reason_category for movement type ${movement_type}. Allowed: ${allowed.join(', ')}`
+    });
+  }
+
   try {
-    await client.query('BEGIN');
+    await pool.query('BEGIN');
 
-    // 1. Insertar encabezado
-    const insertMovementQuery = `
-      INSERT INTO stock_movements (from_branch_id, to_branch_id, movement_type, reason)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id;
+    // Insertar movimiento (con reason_category agregado)
+    const movementInsertQuery = `
+      INSERT INTO stock_movements (from_branch_id, to_branch_id, movement_type, reason_category, reason)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
     `;
-    const { rows } = await client.query(insertMovementQuery, [
-      from_branch_id, to_branch_id, movement_type, reason,
+    const result = await pool.query(movementInsertQuery, [
+      from_branch_id,
+      to_branch_id,
+      movement_type,
+      reason_category || null,
+      reason || null
     ]);
-    const movementId = rows[0].id;
 
-    // 2. Insertar ítems y actualizar stock
+    const movementId = result.rows[0].id;
+
+    // Procesar cada item
     for (const item of items) {
       const { product_id, quantity } = item;
 
-      // 2a. Insertar ítem del movimiento
-      await client.query(`
-        INSERT INTO stock_movement_items (movement_id, product_id, quantity)
-        VALUES ($1, $2, $3);
-      `, [movementId, product_id, quantity]);
+      // Validar producto
+      const checkProduct = await pool.query(
+        'SELECT id FROM products WHERE id = $1',
+        [product_id]
+      );
+      if (checkProduct.rowCount === 0) {
+        await pool.query('ROLLBACK');
+        return res.status(400).json({
+          error: `Product ID ${product_id} does not exist`
+        });
+      }
 
-      // 2b. Restar del stock de origen
-      await client.query(`
-        UPDATE stock
-        SET
-          big_chamber = GREATEST(big_chamber - $3, 0),
-          updated_at = CURRENT_TIMESTAMP
-        WHERE product_id = $1 AND branch_id = $2;
-      `, [product_id, from_branch_id, quantity]);
+      // Insertar ítem
+      await pool.query(
+        `INSERT INTO stock_movement_items (movement_id, product_id, quantity)
+         VALUES ($1, $2, $3)`,
+        [movementId, product_id, quantity]
+      );
 
-      // 2c. Sumar al stock de destino (crear si no existe)
-      const upsertStock = `
-        INSERT INTO stock (product_id, branch_id, big_chamber, updated_at)
-        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
-        ON CONFLICT (product_id, branch_id) DO UPDATE
-        SET big_chamber = stock.big_chamber + EXCLUDED.big_chamber,
-            updated_at = CURRENT_TIMESTAMP;
-      `;
-      await client.query(upsertStock, [product_id, to_branch_id, quantity]);
+      /**
+       * Actualizar stock
+       * ________________________________________
+       * TRANSFER: restar origen, sumar destino
+       * ADJUSTMENT: restar en sucursal origen
+       * INTERNAL: sumar en sucursal destino
+       */
+
+      if (movement_type === 'TRANSFER') {
+        // restar origen
+        await pool.query(`
+          INSERT INTO stock (branch_id, product_id, total)
+          VALUES ($1, $2, 0)
+          ON CONFLICT (branch_id, product_id)
+          DO UPDATE SET total = GREATEST(stock.total - $3, 0)
+        `, [from_branch_id, product_id, quantity]);
+
+        // sumar destino
+        await pool.query(`
+          INSERT INTO stock (branch_id, product_id, total)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (branch_id, product_id)
+          DO UPDATE SET total = stock.total + $3
+        `, [to_branch_id, product_id, quantity]);
+      }
+
+      else if (movement_type === 'ADJUSTMENT') {
+        // ajustes restan stock (por EXPIRED, BROKEN, etc.)
+        await pool.query(`
+          INSERT INTO stock (branch_id, product_id, total)
+          VALUES ($1, $2, 0)
+          ON CONFLICT (branch_id, product_id)
+          DO UPDATE SET total = GREATEST(stock.total - $3, 0)
+        `, [from_branch_id, product_id, quantity]);
+      }
+
+      else if (movement_type === 'INTERNAL') {
+        // INTERNAL suma stock (descarga proveedor, ingresos internos)
+        await pool.query(`
+          INSERT INTO stock (branch_id, product_id, total)
+          VALUES ($1, $2, $3)
+          ON CONFLICT (branch_id, product_id)
+          DO UPDATE SET total = stock.total + $3
+        `, [to_branch_id, product_id, quantity]);
+      }
     }
 
-    await client.query('COMMIT');
-    res.status(201).json({ message: 'Stock movement created', movement_id: movementId });
+    await pool.query('COMMIT');
+    res.status(201).json({ message: 'Stock movement registered successfully.', movement_id: movementId });
 
-  } catch (err) {
-    await client.query('ROLLBACK');
-    console.error('❌ Error creating stock movement:', err);
+  } catch (error) {
+    console.error('❌ Error creating stock movement:', error.message);
+    await pool.query('ROLLBACK');
     res.status(500).json({ error: 'Error creating stock movement' });
-  } finally {
-    client.release();
   }
 };
+
 /**
  * GET /api/stock-movements
- * Devuelve movimientos de stock con filtros opcionales:
- * - branch_id (como origen o destino)
- * - type
- * - from / to (rango de fechas)
+ * Devuelve movimientos agrupados con support para filtros
  */
 const getStockMovements = async (req, res) => {
   const { branch_id, type, from, to } = req.query;
   const values = [];
   const conditions = [];
 
-  // Si se pasa branch_id, filtramos por origen o destino
   if (branch_id) {
     conditions.push('(m.from_branch_id = $1 OR m.to_branch_id = $1)');
     values.push(branch_id);
   }
 
-  // Si se pasa type (TRANSFER, ADJUSTMENT...), lo filtramos
   if (type) {
     conditions.push(`m.movement_type = $${values.length + 1}`);
     values.push(type);
   }
 
-  // Filtrar desde una fecha específica (inclusive)
   if (from) {
     conditions.push(`m.created_at >= $${values.length + 1}`);
     values.push(from);
   }
 
-  // Filtrar hasta una fecha específica (inclusive, todo el día)
   if (to) {
-    // Esta línea hace que el filtro incluya todo el día (hasta las 23:59:59)
+    // incluir todo el día
     conditions.push(`m.created_at < $${values.length + 1}::date + interval '1 day'`);
     values.push(to);
   }
 
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
   const query = `
     SELECT 
@@ -133,6 +188,7 @@ const getStockMovements = async (req, res) => {
       m.from_branch_id,
       m.to_branch_id,
       m.movement_type,
+      m.reason_category,
       m.reason,
       m.created_at,
       i.product_id,
@@ -148,24 +204,24 @@ const getStockMovements = async (req, res) => {
   try {
     const result = await pool.query(query, values);
 
-    // Agrupar por movimiento
+    // AGRUPAR POR movement_id
     const grouped = {};
 
     result.rows.forEach(row => {
-      const id = row.movement_id;
-      if (!grouped[id]) {
-        grouped[id] = {
-          id,
+      if (!grouped[row.movement_id]) {
+        grouped[row.movement_id] = {
+          id: row.movement_id,
           from_branch_id: row.from_branch_id,
           to_branch_id: row.to_branch_id,
           movement_type: row.movement_type,
+          reason_category: row.reason_category,
           reason: row.reason,
           created_at: row.created_at,
           items: []
         };
       }
 
-      grouped[id].items.push({
+      grouped[row.movement_id].items.push({
         product_id: row.product_id,
         product_name: row.product_name,
         quantity: row.quantity
@@ -173,15 +229,16 @@ const getStockMovements = async (req, res) => {
     });
 
     res.json(Object.values(grouped));
+
   } catch (error) {
     console.error('❌ Error fetching stock movements:', error.message);
     res.status(500).json({ error: 'Error fetching stock movements' });
   }
 };
-
 /**
  * GET /api/stock-movements/:id
  * Devuelve un movimiento de stock específico por su ID.
+ * Incluye reason_category y items agrupados.
  */
 const getStockMovementById = async (req, res) => {
   const { id } = req.params;
@@ -190,24 +247,28 @@ const getStockMovementById = async (req, res) => {
     SELECT 
       m.id,
       m.from_branch_id,
-      from_b.name as from_branch_name,
+      from_b.name AS from_branch_name,
       m.to_branch_id,
-      to_b.name as to_branch_name,
+      to_b.name AS to_branch_name,
       m.movement_type,
+      m.reason_category,
       m.reason,
       m.created_at,
-      json_agg(json_build_object(
-        'product_id', i.product_id,
-        'product_name', p.name,
-        'quantity', i.quantity
-      )) as items
+      json_agg(
+        json_build_object(
+          'product_id', i.product_id,
+          'product_name', p.name,
+          'quantity', i.quantity
+        )
+      ) AS items
     FROM stock_movements m
     LEFT JOIN branches from_b ON from_b.id = m.from_branch_id
     LEFT JOIN branches to_b ON to_b.id = m.to_branch_id
     JOIN stock_movement_items i ON i.movement_id = m.id
     JOIN products p ON p.id = i.product_id
     WHERE m.id = $1
-    GROUP BY m.id, from_b.name, to_b.name;
+    GROUP BY 
+      m.id, from_b.name, to_b.name;
   `;
 
   try {
@@ -224,10 +285,9 @@ const getStockMovementById = async (req, res) => {
   }
 };
 
-console.log('✅ stockMovements routes loaded');
-
 module.exports = {
   createStockMovement,
   getStockMovements,
   getStockMovementById,
+
 };
