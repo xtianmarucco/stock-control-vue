@@ -97,13 +97,16 @@ const getStockByBranch = async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    const data = result.rows.map(row => ({
-      id: row.id,
-      name: row.name,
-      category_name: row.category_name,
-      total: Number(row.stock_total)
-    }));
-
+    const data = result.rows.map(row => {
+      const total = Number(row.stock_total);
+      return {
+        id: row.id,
+        name: row.name,
+        category_name: row.category_name,
+        total,
+        low_stock: total <= 3
+      };
+    });
     res.json({
       branch: { id: Number(branchInfo.id), name: branchInfo.name },
       products: data
