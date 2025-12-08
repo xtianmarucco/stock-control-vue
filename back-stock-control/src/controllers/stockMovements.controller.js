@@ -86,6 +86,25 @@ const createStockMovement = async (req, res) => {
         });
       }
 
+      // ⚠️ Validar stock suficiente antes de continuar
+      const isStockOutflow = movement_type === 'TRANSFER' || movement_type === 'ADJUSTMENT';
+
+      if (isStockOutflow) {
+        const stockResult = await pool.query(
+          'SELECT total FROM stock WHERE branch_id = $1 AND product_id = $2',
+          [from_branch_id, product_id]
+        );
+
+        const currentStock = stockResult.rows[0]?.total ?? 0;
+
+        if (currentStock < quantity) {
+          await pool.query('ROLLBACK');
+          return res.status(400).json({
+            error: `Insufficient stock for product ID ${product_id} in branch ${from_branch_id}. Available: ${currentStock}, requested: ${quantity}`
+          });
+        }
+      }
+
       // Insertar ítem
       await pool.query(
         `INSERT INTO stock_movement_items (movement_id, product_id, quantity)
@@ -93,16 +112,8 @@ const createStockMovement = async (req, res) => {
         [movementId, product_id, quantity]
       );
 
-      /**
-       * Actualizar stock
-       * ________________________________________
-       * TRANSFER: restar origen, sumar destino
-       * ADJUSTMENT: restar en sucursal origen
-       * INTERNAL: sumar en sucursal destino
-       */
-
+      // Actualizar stock
       if (movement_type === 'TRANSFER') {
-        // restar origen
         await pool.query(`
           INSERT INTO stock (branch_id, product_id, total)
           VALUES ($1, $2, 0)
@@ -110,7 +121,6 @@ const createStockMovement = async (req, res) => {
           DO UPDATE SET total = GREATEST(stock.total - $3, 0)
         `, [from_branch_id, product_id, quantity]);
 
-        // sumar destino
         await pool.query(`
           INSERT INTO stock (branch_id, product_id, total)
           VALUES ($1, $2, $3)
@@ -120,7 +130,6 @@ const createStockMovement = async (req, res) => {
       }
 
       else if (movement_type === 'ADJUSTMENT') {
-        // ajustes restan stock (por EXPIRED, BROKEN, etc.)
         await pool.query(`
           INSERT INTO stock (branch_id, product_id, total)
           VALUES ($1, $2, 0)
@@ -130,7 +139,6 @@ const createStockMovement = async (req, res) => {
       }
 
       else if (movement_type === 'INTERNAL') {
-        // INTERNAL suma stock (descarga proveedor, ingresos internos)
         await pool.query(`
           INSERT INTO stock (branch_id, product_id, total)
           VALUES ($1, $2, $3)
@@ -152,7 +160,7 @@ const createStockMovement = async (req, res) => {
 
 /**
  * GET /api/stock-movements
- * Devuelve movimientos agrupados con support para filtros
+ * Devuelve movimientos agrupados con soporte para filtros
  */
 const getStockMovements = async (req, res) => {
   const { branch_id, type, from, to } = req.query;
@@ -175,7 +183,6 @@ const getStockMovements = async (req, res) => {
   }
 
   if (to) {
-    // incluir todo el día
     conditions.push(`m.created_at < $${values.length + 1}::date + interval '1 day'`);
     values.push(to);
   }
@@ -204,7 +211,6 @@ const getStockMovements = async (req, res) => {
   try {
     const result = await pool.query(query, values);
 
-    // AGRUPAR POR movement_id
     const grouped = {};
 
     result.rows.forEach(row => {
@@ -229,16 +235,15 @@ const getStockMovements = async (req, res) => {
     });
 
     res.json(Object.values(grouped));
-
   } catch (error) {
     console.error('❌ Error fetching stock movements:', error.message);
     res.status(500).json({ error: 'Error fetching stock movements' });
   }
 };
+
 /**
  * GET /api/stock-movements/:id
- * Devuelve un movimiento de stock específico por su ID.
- * Incluye reason_category y items agrupados.
+ * Devuelve un movimiento de stock específico por su ID
  */
 const getStockMovementById = async (req, res) => {
   const { id } = req.params;
@@ -289,5 +294,4 @@ module.exports = {
   createStockMovement,
   getStockMovements,
   getStockMovementById,
-
 };
