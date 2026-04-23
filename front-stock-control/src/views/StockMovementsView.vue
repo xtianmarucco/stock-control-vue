@@ -1,107 +1,114 @@
-<!-- src/views/StockMovementsView.vue -->
 <template>
-  <div class="space-y-6">
+  <div class="space-y-5">
     <!-- Encabezado -->
-    <div class="flex justify-between items-center">
-      <h1 class="text-2xl font-semibold">Gestión de Movimientos de Stock</h1>
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex justify-between items-center">
+      <div>
+        <h1 class="text-xl font-bold text-[#193B68]">Movimientos de Stock</h1>
+        <p class="text-sm text-gray-400 mt-0.5">Registros y filtros de movimientos</p>
+      </div>
       <button
-        class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
+        class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-full text-sm transition-colors"
         @click="openMovementModal"
       >
-        ➕ Nuevo movimiento
+        + Nuevo movimiento
       </button>
     </div>
 
     <!-- Filtros -->
-    <div class="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
-      <div>
-        <label class="text-sm text-gray-600 block mb-1">Sucursal</label>
-        <select v-model="filters.branch" class="border rounded-lg px-3 py-2">
-          <option value="">Todas</option>
-          <option v-for="b in branches" :key="b.id" :value="b.id">
-            {{ b.name }}
-          </option>
-        </select>
-      </div>
-
-      <div>
-        <label class="text-sm text-gray-600 block mb-1">Tipo de movimiento</label>
-        <select v-model="filters.type" class="border rounded-lg px-3 py-2">
-          <option value="">Todos</option>
-          <option value="TRANSFER">Traslado</option>
-          <option value="ADJUSTMENT">Ajuste</option>
-          <option value="INTERNAL">Interno</option>
-        </select>
-      </div>
-
-      <div class="flex items-end gap-2">
-        <div>
-          <label class="text-sm text-gray-600 block mb-1">Desde</label>
-          <input type="date" v-model="filters.from" class="border rounded-lg px-3 py-2" />
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5">
+      <div class="flex flex-wrap items-end gap-4">
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sucursal</label>
+          <select v-model="filters.branch" class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] min-w-[160px]">
+            <option value="">Todas las sucursales</option>
+            <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+          </select>
         </div>
-        <div>
-          <label class="text-sm text-gray-600 block mb-1">Hasta</label>
-          <input type="date" v-model="filters.to" class="border rounded-lg px-3 py-2" />
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Tipo</label>
+          <select v-model="filters.type" class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] min-w-[140px]">
+            <option value="">Todos</option>
+            <option value="TRANSFER">Traslado</option>
+            <option value="ADJUSTMENT">Ajuste</option>
+            <option value="INTERNAL">Interno</option>
+          </select>
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Desde</label>
+          <input type="date" v-model="filters.from" class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF]" />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Hasta</label>
+          <input type="date" v-model="filters.to" class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF]" />
+        </div>
+
+        <div class="flex gap-2 ml-auto">
+          <button
+            class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-lg text-sm transition-colors"
+            @click="fetchMovements"
+          >
+            Filtrar
+          </button>
+          <button
+            class="border border-gray-200 text-[#193B68] font-medium px-5 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+            @click="clearFilters"
+          >
+            Limpiar
+          </button>
         </div>
       </div>
-
-      <button
-        class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg ml-auto transition-all"
-        @click="fetchMovements"
-      >
-        🔄 Filtrar
-      </button>
     </div>
 
     <!-- Tabla -->
-    <div class="overflow-x-auto bg-white shadow rounded-lg border border-gray-200">
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
       <table class="min-w-full text-sm text-left">
-        <thead class="bg-gray-100 border-b text-gray-700 uppercase text-xs">
+        <thead class="border-b border-gray-100">
           <tr>
-            <th class="px-4 py-3">Fecha</th>
-            <th class="px-4 py-3">Tipo</th>
-            <th class="px-4 py-3">Sucursal Origen</th>
-            <th class="px-4 py-3">Sucursal Destino</th>
-            <th class="px-4 py-3 text-right">Productos</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Fecha</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Tipo</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Sucursal origen</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Sucursal destino</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Realizado por</th>
+            <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Productos</th>
           </tr>
         </thead>
         <tbody>
           <tr
             v-for="mov in movements"
             :key="mov.id"
-            class="border-b hover:bg-gray-50 transition-colors cursor-pointer"
+            class="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
             @click="openDetailModal(mov.id)"
           >
-            <td class="px-4 py-3">{{ formatDate(mov.created_at) }}</td>
-            <td class="px-4 py-3">{{ formatType(mov.movement_type) }}</td>
-            <td class="px-4 py-3">{{ getBranchName(mov.from_branch_id) }}</td>
-            <td class="px-4 py-3">{{ getBranchName(mov.to_branch_id) }}</td>
-            <td class="px-4 py-3 text-right">{{ mov.items?.length || 0 }}</td>
+            <td class="px-6 py-4 text-[#193B68] font-medium">{{ formatDate(mov.created_at) }}</td>
+            <td class="px-6 py-4">
+              <span :class="typeBadge(mov.movement_type)">{{ formatType(mov.movement_type) }}</span>
+            </td>
+            <td class="px-6 py-4 text-[#193B68]">{{ mov.from_branch_name || getBranchName(mov.from_branch_id) }}</td>
+            <td class="px-6 py-4 text-gray-400">{{ mov.to_branch_name || getBranchName(mov.to_branch_id) || '—' }}</td>
+            <td class="px-6 py-4 text-gray-500">{{ mov.created_by?.username || '—' }}</td>
+            <td class="px-6 py-4 text-right text-[#193B68] font-medium">{{ mov.items?.length || 0 }}</td>
           </tr>
         </tbody>
       </table>
 
-      <div v-if="!loading && movements.length === 0" class="text-center py-6 text-gray-500">
+      <div v-if="!loading && movements.length === 0" class="text-center py-10 text-gray-400 text-sm">
         No se encontraron movimientos
       </div>
-
-      <div v-if="loading" class="text-center py-6 text-gray-400 italic">
-        Cargando movimientos...
+      <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">
+        Cargando...
       </div>
     </div>
 
-    <!-- Modal de Detalle -->
-    <MovementDetailModal
-      v-model="isDetailModalOpen"
-      :movement-id="selectedMovementId"
-    />
+    <MovementDetailModal v-model="isDetailModalOpen" :movement-id="selectedMovementId" />
 
-    <!-- Modal de nuevo movimiento -->
     <StockMovementModal
       v-if="showMovementModal"
       :branches="branches"
-      :products="products.products"
-  :default-branch-id="Number(filters.branch) || branches[0]?.id"
+      :products="products"
+      :default-branch-id="Number(filters.branch) || branches[0]?.id"
       @close="showMovementModal = false"
       @saved="onMovementSaved"
     />
@@ -111,99 +118,84 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
-import { getStockMovements } from '../services/movementsService.js'
-import { getBranches } from '../services/branchService.js'
-import { getStockByBranch } from '../services/productService.js'
+import { getStockMovements } from '../services/MovementsService.js'
+import { getBranches } from '../services/BranchService.js'
+import { getStockByBranch } from '../services/ProductService.js'
 import StockMovementModal from '../components/StockMovementModal/StockMovementModal.vue'
 
-// 🔹 Estados
 const movements = ref([])
 const branches = ref([])
 const products = ref([])
-const filters = ref({
-  branch: '',
-  type: '',
-  from: '',
-  to: ''
-})
+const filters = ref({ branch: '', type: '', from: '', to: '' })
 const loading = ref(false)
 const isDetailModalOpen = ref(false)
 const selectedMovementId = ref(null)
 const showMovementModal = ref(false)
 
-// 🔹 Fetch movimientos
 const fetchMovements = async () => {
   loading.value = true
   try {
-    const res = await getStockMovements(filters.value)
-    movements.value = res
+    movements.value = await getStockMovements(filters.value)
   } catch (err) {
-    console.error('❌ Error al obtener movimientos:', err)
+    console.error(err)
   } finally {
     loading.value = false
   }
 }
 
-// 🔹 Fetch sucursales
+const clearFilters = () => {
+  filters.value = { branch: '', type: '', from: '', to: '' }
+  fetchMovements()
+}
+
 const fetchBranches = async () => {
   try {
     branches.value = await getBranches()
   } catch (err) {
-    console.error('❌ Error fetching branches:', err)
+    console.error(err)
   }
 }
 
-// 🔹 Fetch productos por sucursal para el modal
 const fetchProductsForBranch = async () => {
-  // Usar el branch de filtros o el primero disponible
-  const branchToUse = filters.value.branch
-    ? Number(filters.value.branch)
-    : branches.value[0]?.id;
-
-  if (!branchToUse) {
-    console.warn("⚠ No hay sucursales disponibles para cargar productos.");
-    products.value = [];
-    return;
-  }
-
+  const branchId = filters.value.branch ? Number(filters.value.branch) : branches.value[0]?.id
+  if (!branchId) { products.value = []; return }
   try {
-    products.value = await getStockByBranch(branchToUse);
-  } catch (err) {
-    console.error("❌ Error fetching products for branch:", err);
-    products.value = [];
+    products.value = await getStockByBranch(branchId)
+  } catch {
+    products.value = []
   }
-};
-
-const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
-const formatType = (type) =>
-  ({ TRANSFER: 'Traslado', ADJUSTMENT: 'Ajuste', INTERNAL: 'Interno' }[type] || type)
+}
 
 const branchesMap = computed(() =>
-  branches.value.reduce((acc, branch) => {
-    acc[branch.id] = branch.name
-    return acc
-  }, {})
+  branches.value.reduce((acc, b) => { acc[b.id] = b.name; return acc }, {})
 )
+const getBranchName = (id) => branchesMap.value[id] || '—'
 
-const getBranchName = (branchId) => branchesMap.value[branchId] || '-'
+const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
+const formatType = (type) => ({ TRANSFER: 'Traslado', ADJUSTMENT: 'Ajuste', INTERNAL: 'Interno' }[type] || type)
 
-const openDetailModal = (movementId) => {
-  selectedMovementId.value = movementId
+const typeBadge = (type) => {
+  const base = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold'
+  const map = {
+    TRANSFER: `${base} bg-blue-100 text-blue-700`,
+    ADJUSTMENT: `${base} bg-orange-100 text-orange-700`,
+    INTERNAL: `${base} bg-purple-100 text-purple-700`
+  }
+  return map[type] ?? `${base} bg-gray-100 text-gray-600`
+}
+
+const openDetailModal = (id) => {
+  selectedMovementId.value = id
   isDetailModalOpen.value = true
 }
 
-// 🔹 Abrir modal de nuevo movimiento
 const openMovementModal = async () => {
   await fetchProductsForBranch()
   showMovementModal.value = true
 }
 
-// 🔹 Cuando se guarda un nuevo movimiento en el modal
-const onMovementSaved = async () => {
-  await fetchMovements()
-}
+const onMovementSaved = () => fetchMovements()
 
-// INIT
 onMounted(async () => {
   await fetchBranches()
   await fetchMovements()
