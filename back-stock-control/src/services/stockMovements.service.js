@@ -46,6 +46,7 @@ function formatMovement(m) {
     reason_category_label: m.reasonCategory?.label ?? null,
     reason: m.reason,
     created_at: m.created_at,
+    created_by: m.createdBy ?? null,
     items: (m.items ?? []).map(i => ({
       product_id: i.product_id,
       product_name: i.product?.name ?? null,

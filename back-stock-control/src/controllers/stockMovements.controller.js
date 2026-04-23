@@ -22,7 +22,7 @@ const getStockMovementById = async (req, res) => {
 
 const createStockMovement = async (req, res) => {
   try {
-    const data = await service.create(req.body)
+    const data = await service.create({ ...req.body, user_id: req.session.userId })
     res.status(201).json({ success: true, data })
   } catch (err) {
     handleError(res, err)

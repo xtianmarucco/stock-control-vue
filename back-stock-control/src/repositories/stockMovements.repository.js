@@ -4,7 +4,8 @@ const MOVEMENT_INCLUDE = {
   items: { include: { product: true } },
   fromBranch: true,
   toBranch: true,
-  reasonCategory: true
+  reasonCategory: true,
+  createdBy: { select: { id: true, username: true } }
 }
 
 const findAll = async (filters = {}) => {
@@ -36,7 +37,7 @@ const findAll = async (filters = {}) => {
 const findById = (id) =>
   prisma.stock_movements.findUnique({ where: { id }, include: MOVEMENT_INCLUDE })
 
-const createWithItems = async ({ movement_type, from_branch_id, to_branch_id, reason_category_id, reason, items }) =>
+const createWithItems = async ({ movement_type, from_branch_id, to_branch_id, reason_category_id, reason, items, user_id }) =>
   prisma.$transaction(async (tx) => {
     const movement = await tx.stock_movements.create({
       data: {
@@ -44,7 +45,8 @@ const createWithItems = async ({ movement_type, from_branch_id, to_branch_id, re
         from_branch_id,
         to_branch_id: to_branch_id ?? null,
         reason_category_id: reason_category_id ?? null,
-        reason: reason ?? null
+        reason: reason ?? null,
+        user_id: user_id ?? null
       }
     })
 
