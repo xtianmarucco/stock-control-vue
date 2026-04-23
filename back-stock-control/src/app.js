@@ -1,32 +1,16 @@
-// src/app.js
-const express = require('express');
-require('dotenv').config();
-const cors = require('cors');
+require('dotenv').config()
+const express = require('express')
+const cors = require('cors')
+const routes = require('./routes')
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const app = express()
+const PORT = process.env.PORT || 3000
 
-// Middlewares
-app.use(cors());
-app.use(express.json());
+app.use(cors())
+app.use(express.json())
 
-// 👉 Importar las rutas de branches
-const branchesRoutes = require('./routes/branches.routes');
-const stockMovementsRoutes = require('./routes/stockMovements.routes');
-// 👉 Registrar rutas bajo /api/branches
-app.use('/api/branches', branchesRoutes);
-app.use('/api/stock-movements', stockMovementsRoutes);
-// Si tenés más rutas generales, podés agregarlas aquí:
-// const otherRoutes = require('./routes/other.routes');
-// app.use('/api/other', otherRoutes);
+app.use('/api', routes)
 
+app.get('/', (_req, res) => res.json({ success: true, data: 'API running' }))
 
-// Ruta base opcional para verificar el estado del servidor
-app.get('/', (req, res) => {
-  res.send('🚀 API funcionando correctamente');
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))

@@ -1,44 +1,22 @@
-// src/services/movementsService.js
-import axios from 'axios'
+import apiClient from './apiClient'
 
-const API_URL = 'http://localhost:3000/api/stock-movements'
-
-// 🔹 Obtener movimientos con filtros opcionales
 export const getStockMovements = async (filters = {}) => {
-  try {
-    const params = {}
+  const params = {}
+  if (filters.branch) params.branch_id = filters.branch
+  if (filters.type) params.type = filters.type
+  if (filters.from) params.from = filters.from
+  if (filters.to) params.to = filters.to
 
-    if (filters.branch) params.branch_id = filters.branch
-    if (filters.type) params.type = filters.type
-    if (filters.from) params.from = filters.from
-    if (filters.to) params.to = filters.to
-
-    const { data } = await axios.get(API_URL, { params })
-    return data
-  } catch (error) {
-    console.error('❌ Error fetching stock movements:', error)
-    throw error
-  }
+  const res = await apiClient.get('/stock-movements', { params })
+  return res.data.data
 }
 
-// 🔹 Crear nuevo movimiento
 export const createStockMovement = async (movementData) => {
-  try {
-    const { data } = await axios.post(API_URL, movementData)
-    return data
-  } catch (error) {
-    console.error('❌ Error creating stock movement:', error.response?.data || error)
-    throw error
-  }
+  const res = await apiClient.post('/stock-movements', movementData)
+  return res.data.data
 }
 
-// 🔹 Obtener detalles de un movimiento específico
 export const getStockMovementById = async (id) => {
-  try {
-    const { data } = await axios.get(`${API_URL}/${id}`)
-    return data
-  } catch (error) {
-    console.error('❌ Error fetching stock movement by ID:', error)
-    throw error
-  }
+  const res = await apiClient.get(`/stock-movements/${id}`)
+  return res.data.data
 }

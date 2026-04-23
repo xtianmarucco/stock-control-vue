@@ -1,125 +1,40 @@
-// back-stock-control/src/controllers/branches.controller.js
-const pool = require('../db');
+const service = require('../services/branches.service')
+const { handleError } = require('../utils/handleError')
 
-// 📊 Donut: resumen por categoría
-const getStockSummaryByCategory = async (req, res) => {
-  const branchId = req.params.id;
-
-  try {
-    const result = await pool.query(
-      `SELECT p.category_name AS category, SUM(s.total) AS total
-       FROM stock s
-       JOIN products p ON s.product_id = p.id
-       WHERE s.branch_id = $1
-       GROUP BY p.category_name
-       ORDER BY p.category_name`,
-      [branchId]
-    );
-
-    const data = result.rows.map(row => ({
-      category: row.category,
-      total: Number(row.total)
-    }));
-
-    res.json(data);
-  } catch (error) {
-    console.error('❌ Error fetching stock summary by category:', error);
-    res.status(500).json({ error: 'Error fetching stock summary by category' });
-  }
-};
-
-// 🏪 Listado de sucursales
 const getAllBranches = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM branches ORDER BY name');
-    res.json(result.rows);
-  } catch (error) {
-    console.error('❌ Error fetching branches:', error);
-    res.status(500).json({ error: 'Error fetching branches' });
+    const data = await service.getAll()
+    res.json({ success: true, data })
+  } catch (err) {
+    handleError(res, err)
   }
-};
+}
 
 const getBranchById = async (req, res) => {
-  const { id } = req.params;
-
   try {
-    const result = await pool.query(
-      'SELECT id, name, address FROM branches WHERE id = $1',
-      [id]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Branch not found' });
-    }
-
-    res.json(result.rows[0]);
-  } catch (error) {
-    console.error('❌ Error fetching branch by id:', error);
-    res.status(500).json({ error: 'Error fetching branch by id' });
+    const data = await service.getById(Number(req.params.id))
+    res.json({ success: true, data })
+  } catch (err) {
+    handleError(res, err)
   }
-};
+}
 
-// 📦 Tabla: stock detallado por branch (+ filtro opcional por categoría)
+const getStockSummaryByCategory = async (req, res) => {
+  try {
+    const data = await service.getStockSummaryByCategory(Number(req.params.id))
+    res.json({ success: true, data })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
 const getStockByBranch = async (req, res) => {
-  const { id } = req.params;
-  const { category } = req.query;
-
   try {
-    const branchResult = await pool.query(
-      `SELECT id, name FROM branches WHERE id = $1`,
-      [id]
-    );
-
-    if (branchResult.rowCount === 0) {
-      return res.status(404).json({ error: 'Branch not found' });
-    }
-
-    const branchInfo = branchResult.rows[0];
-
-    let query = `
-      SELECT 
-        p.id,
-        p.name,
-        p.category_name,
-        s.total AS stock_total
-      FROM stock s
-      JOIN products p ON s.product_id = p.id
-      WHERE s.branch_id = $1
-    `;
-    const params = [id];
-
-    if (category) {
-      query += ` AND p.category_name = $2`;
-      params.push(category);
-    }
-
-    query += ` ORDER BY p.category_name, p.name`;
-
-    const result = await pool.query(query, params);
-
-    const data = result.rows.map(row => {
-      const total = Number(row.stock_total);
-      return {
-        id: row.id,
-        name: row.name,
-        category_name: row.category_name,
-        total,
-        low_stock: total <= 3
-      };
-    });
-    res.json({
-      branch: { id: Number(branchInfo.id), name: branchInfo.name },
-      products: data
-    })
-  } catch (error) {
-    console.error('❌ Error fetching stock by branch:', error);
-    res.status(500).json({ error: 'Error fetching stock by branch' });
+    const data = await service.getStockByBranch(Number(req.params.id), req.query.category)
+    res.json({ success: true, data })
+  } catch (err) {
+    handleError(res, err)
   }
-};
+}
 
-module.exports = {
-  getStockSummaryByCategory,
-  getAllBranches,
-  getBranchById,
-  getStockByBranch
-};
+module.exports = { getAllBranches, getBranchById, getStockSummaryByCategory, getStockByBranch }

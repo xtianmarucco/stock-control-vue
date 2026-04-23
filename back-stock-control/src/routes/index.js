@@ -1,14 +1,11 @@
-const express = require('express');
-const router = express.Router();
+const { Router } = require('express')
 
-const productsRoutes = require('./products.routes');
-const branchesRoutes = require('./branches.routes');
-const stockRoutes = require('./stock.routes');
-const stockMovementsRoutes = require('./stockMovements.routes');
+const branchesRoutes = require('./branches.routes')
+const stockMovementsRoutes = require('./stockMovements.routes')
 
-router.use('/products', productsRoutes);
-router.use('/branches', branchesRoutes);
-router.use('/stock', stockRoutes);
-router.use('/stock-movements', stockMovementsRoutes);
+const router = Router()
 
-module.exports = router;
+router.use('/branches', branchesRoutes)
+router.use('/stock-movements', stockMovementsRoutes)
+
+module.exports = router

@@ -6,7 +6,7 @@
       <h1 class="text-2xl font-semibold">Gestión de Movimientos de Stock</h1>
       <button
         class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg transition-all"
-        @click="openNewMovementModal"
+        @click="openMovementModal"
       >
         ➕ Nuevo movimiento
       </button>
@@ -95,6 +95,16 @@
       v-model="isDetailModalOpen"
       :movement-id="selectedMovementId"
     />
+
+    <!-- Modal de nuevo movimiento -->
+    <StockMovementModal
+      v-if="showMovementModal"
+      :branches="branches"
+      :products="products.products"
+  :default-branch-id="Number(filters.branch) || branches[0]?.id"
+      @close="showMovementModal = false"
+      @saved="onMovementSaved"
+    />
   </div>
 </template>
 
@@ -103,10 +113,13 @@ import { ref, onMounted, computed } from 'vue'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
 import { getStockMovements } from '../services/movementsService.js'
 import { getBranches } from '../services/branchService.js'
+import { getStockByBranch } from '../services/productService.js'
+import StockMovementModal from '../components/StockMovementModal/StockMovementModal.vue'
 
 // 🔹 Estados
 const movements = ref([])
 const branches = ref([])
+const products = ref([])
 const filters = ref({
   branch: '',
   type: '',
@@ -116,8 +129,9 @@ const filters = ref({
 const loading = ref(false)
 const isDetailModalOpen = ref(false)
 const selectedMovementId = ref(null)
+const showMovementModal = ref(false)
 
-// 🔹 Fetch inicial
+// 🔹 Fetch movimientos
 const fetchMovements = async () => {
   loading.value = true
   try {
@@ -130,13 +144,35 @@ const fetchMovements = async () => {
   }
 }
 
+// 🔹 Fetch sucursales
 const fetchBranches = async () => {
   try {
     branches.value = await getBranches()
   } catch (err) {
-    console.error('❌ Error al obtener sucursales:', err)
+    console.error('❌ Error fetching branches:', err)
   }
 }
+
+// 🔹 Fetch productos por sucursal para el modal
+const fetchProductsForBranch = async () => {
+  // Usar el branch de filtros o el primero disponible
+  const branchToUse = filters.value.branch
+    ? Number(filters.value.branch)
+    : branches.value[0]?.id;
+
+  if (!branchToUse) {
+    console.warn("⚠ No hay sucursales disponibles para cargar productos.");
+    products.value = [];
+    return;
+  }
+
+  try {
+    products.value = await getStockByBranch(branchToUse);
+  } catch (err) {
+    console.error("❌ Error fetching products for branch:", err);
+    products.value = [];
+  }
+};
 
 const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
 const formatType = (type) =>
@@ -151,16 +187,25 @@ const branchesMap = computed(() =>
 
 const getBranchName = (branchId) => branchesMap.value[branchId] || '-'
 
-const openNewMovementModal = () => {
-  alert('Abrir modal para crear nuevo movimiento (por implementar)')
-}
-
 const openDetailModal = (movementId) => {
   selectedMovementId.value = movementId
   isDetailModalOpen.value = true
 }
 
+// 🔹 Abrir modal de nuevo movimiento
+const openMovementModal = async () => {
+  await fetchProductsForBranch()
+  showMovementModal.value = true
+}
+
+// 🔹 Cuando se guarda un nuevo movimiento en el modal
+const onMovementSaved = async () => {
+  await fetchMovements()
+}
+
+// INIT
 onMounted(async () => {
-  await Promise.all([fetchBranches(), fetchMovements()])
+  await fetchBranches()
+  await fetchMovements()
 })
 </script>
