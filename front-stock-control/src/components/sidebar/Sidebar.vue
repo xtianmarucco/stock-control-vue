@@ -1,92 +1,82 @@
 <template>
-  <aside class="h-full bg-[#0F2340] text-slate-300 flex flex-col">
-    <!-- Logo -->
-    <div class="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-      <div class="w-8 h-8 bg-[#1479FF] rounded-lg flex items-center justify-center shrink-0">
+  <aside
+    class="flex h-full flex-col bg-[#0F2340] text-slate-300 shadow-[0_24px_50px_rgba(15,35,64,0.35)] transition-transform duration-300 ease-out lg:translate-x-0 lg:shadow-none"
+    :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
+  >
+    <div class="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+      <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1479FF] shrink-0">
         <i class="i-lucide-package-2 text-white text-base"></i>
       </div>
-      <div>
+      <div class="min-w-0">
         <p class="text-white font-bold text-sm leading-tight">Stock Control</p>
         <p class="text-slate-400 text-xs leading-tight">Heladería</p>
       </div>
+      <button
+        type="button"
+        class="ml-auto flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 text-slate-300 transition hover:bg-white/10 hover:text-white lg:hidden"
+        @click="emit('close')"
+        aria-label="Cerrar menú"
+      >
+        ✕
+      </button>
     </div>
 
-    <!-- Nav -->
-    <nav class="flex flex-col gap-1 px-3 py-4 flex-1">
-      <SidebarItem icon="layout-dashboard" label="Dashboard" to="/dashboard" />
+    <div class="flex flex-1 flex-col overflow-hidden px-3 py-4">
+      <nav class="flex flex-col gap-1 overflow-y-auto">
+        <SidebarItem icon="layout-dashboard" label="Dashboard" to="/dashboard" @navigate="emit('close')" />
 
-      <SidebarItem
-        icon="box"
-        label="Productos"
-        :active="isProductsRoute"
-        :open="isProductsOpen"
-        @toggle="toggleProducts"
-      >
-        <RouterLink
-          v-for="branch in branches"
-          :key="branch.id"
-          :to="`/branches/${branch.id}/products`"
-          class="flex items-center gap-2 px-3 py-1.5 rounded-md text-xs transition-colors ml-1"
-          :class="route.params.branchId === String(branch.id)
-            ? 'text-white bg-white/10'
-            : 'text-slate-400 hover:text-white hover:bg-white/5'"
+        <SidebarItem
+          icon="box"
+          label="Productos"
+          :active="isProductsRoute"
+          :open="isProductsOpen"
+          @toggle="toggleProducts"
+          @navigate="emit('close')"
         >
-          <i class="i-lucide-building-2 text-sm"></i>
-          <span>{{ branch.name ?? `Sucursal ${branch.id}` }}</span>
-        </RouterLink>
-      </SidebarItem>
+          <RouterLink
+            v-for="branch in branches"
+            :key="branch.id"
+            :to="`/branches/${branch.id}/products`"
+            class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors"
+            :class="route.params.branchId === String(branch.id)
+              ? 'text-white bg-white/10'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'"
+            @click="emit('close')"
+          >
+            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"></span>
+            <span>{{ branch.name ?? `Sucursal ${branch.id}` }}</span>
+          </RouterLink>
+        </SidebarItem>
 
-      <SidebarItem icon="arrow-left-right" label="Movimientos" to="/movements" />
-      <SidebarItem icon="bar-chart-3" label="Reportes" />
-    </nav>
-
-    <!-- Usuario + Logout -->
-    <div class="border-t border-white/10 px-4 py-4">
-      <div class="flex items-center gap-3 mb-3">
-        <div class="w-8 h-8 rounded-full bg-[#1479FF] flex items-center justify-center text-white text-sm font-semibold shrink-0">
-          {{ userInitial }}
-        </div>
-        <div class="overflow-hidden">
-          <p class="text-white text-sm font-medium leading-tight truncate">{{ authStore.user?.username }}</p>
-          <p class="text-slate-400 text-xs leading-tight">Administrador</p>
-        </div>
-      </div>
-      <button
-        @click="handleLogout"
-        class="flex items-center gap-2 text-slate-400 hover:text-white text-sm transition-colors w-full"
-      >
-        <i class="i-lucide-log-out text-base"></i>
-        <span>Cerrar sesión</span>
-      </button>
+        <SidebarItem icon="arrow-left-right" label="Movimientos" to="/movements" @navigate="emit('close')" />
+        <SidebarItem icon="bar-chart-3" label="Reportes" />
+      </nav>
     </div>
   </aside>
 </template>
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { RouterLink, useRoute } from 'vue-router'
 import SidebarItem from '../sidebar-item/SidebarItem.vue'
 import { getAllBranches } from '../../services/BranchService'
-import { useAuthStore } from '../../stores/authStore'
+
+defineProps({
+  isOpen: { type: Boolean, default: false }
+})
+
+const emit = defineEmits(['close'])
 
 const route = useRoute()
-const router = useRouter()
-const authStore = useAuthStore()
 
 const branches = ref([])
 const branchesLoaded = ref(false)
 const isProductsOpen = ref(false)
 
 const isProductsRoute = computed(() => route.path.startsWith('/branches/'))
-const userInitial = computed(() => authStore.user?.username?.[0]?.toUpperCase() ?? '?')
 
 const toggleProducts = () => {
   isProductsOpen.value = !isProductsOpen.value
-}
-
-const handleLogout = async () => {
-  await authStore.logout()
-  router.push('/login')
 }
 
 watch(

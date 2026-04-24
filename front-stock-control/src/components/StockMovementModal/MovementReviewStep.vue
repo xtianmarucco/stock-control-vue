@@ -1,17 +1,12 @@
 <!-- src/components/movements/MovementReviewStep.vue -->
 <template>
   <div class="flex flex-col gap-6">
+    <h3 class="text-xl font-semibold text-[var(--color-text-base)]">Revisión del movimiento</h3>
 
-    <!-- Título -->
-    <h3 class="text-xl font-semibold">Revisión del movimiento</h3>
+    <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+      <h4 class="mb-4 text-lg font-semibold text-[var(--color-text-base)]">Detalles generales</h4>
 
-    <!-- Detalles generales -->
-    <div class="bg-gray-50 p-4 rounded-lg border">
-      
-      <h4 class="font-semibold text-lg mb-3">Detalles generales</h4>
-
-      <div class="space-y-2 text-sm text-gray-700">
-
+      <div class="space-y-3 text-sm text-[var(--color-text-base)]">
         <p>
           <span class="font-medium">Tipo:</span>
           {{ movementTypeLabel }}
@@ -39,55 +34,36 @@
       </div>
     </div>
 
-    <!-- Lista de productos -->
-    <div class="bg-gray-50 p-4 rounded-lg border">
+    <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+      <h4 class="mb-4 text-lg font-semibold text-[var(--color-text-base)]">Productos afectados</h4>
 
-      <h4 class="font-semibold text-lg mb-3">Productos afectados</h4>
-
-      <table class="w-full text-sm">
-        <thead class="text-gray-500 border-b">
+      <div class="overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-white">
+        <table class="w-full text-sm">
+          <thead class="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
           <tr>
-            <th class="text-left py-2">Producto</th>
-            <th class="py-2 text-center">Stock actual</th>
-            <th class="py-2 text-center">Cantidad</th>
-            <th class="py-2 text-center">Resultado</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Producto</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em]">Stock actual</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em]">Cantidad</th>
+              <th class="px-4 py-3 text-center text-xs font-semibold uppercase tracking-[0.16em]">Resultado</th>
           </tr>
-        </thead>
+          </thead>
 
-        <tbody>
-          <tr
-            v-for="(item, idx) in draft.items"
-            :key="idx"
-            class="border-b"
-          >
-            <td class="py-2">{{ item.product_name }}</td>
-
-            <td class="py-2 text-center text-gray-700">
-              {{ item.available_stock ?? '-' }}
-            </td>
-
-            <td class="py-2 text-center font-semibold">
-              {{ signedQuantity(item.quantity_input) }}
-            </td>
-
-            <td class="py-2 text-center">
-              <span
-                :class="[
-                  'inline-block px-2 py-1 rounded text-xs font-semibold',
-                  draft.movement_type === 'ADJUSTMENT'
-                    ? 'bg-red-100 text-red-700'
-                    : draft.movement_type === 'INTERNAL'
-                    ? 'bg-green-100 text-green-700'
-                    : 'bg-blue-100 text-blue-700'
-                ]"
-              >
-                {{ resultLabel }}
-              </span>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-
+          <tbody>
+            <tr
+              v-for="(item, idx) in draft.items"
+              :key="idx"
+              class="border-b border-[var(--color-border)] last:border-b-0"
+            >
+              <td class="px-4 py-3 text-[var(--color-text-base)]">{{ item.product_name }}</td>
+              <td class="px-4 py-3 text-center text-[var(--color-text-muted)]">{{ item.available_stock ?? '-' }}</td>
+              <td class="px-4 py-3 text-center font-semibold text-[var(--color-text-base)]">{{ signedQuantity(item.quantity_input) }}</td>
+              <td class="px-4 py-3 text-center">
+                <span :class="resultBadgeClass">{{ resultLabel }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </template>
@@ -98,7 +74,8 @@ import { computed } from 'vue'
 
 const props = defineProps({
   draft: { type: Object, required: true },
-  branches: { type: Array, required: true }
+  branches: { type: Array, required: true },
+  reasonCategories: { type: Array, default: () => [] }
 })
 
 //
@@ -113,16 +90,7 @@ const movementTypeLabel = computed(() => {
 })
 
 const reasonCategoryLabel = computed(() => {
-  return {
-    // Ajustes
-    EXPIRED: 'Vencido',
-    BROKEN: 'Roto',
-    BOX_FINISHED: 'Caja terminada',
-
-    // Internos
-    SUPPLIER_UNLOAD: 'Descarga proveedor',
-    OTHER_INCOME: 'Otros ingresos'
-  }[props.draft.reason_category] || null
+  return props.reasonCategories.find(category => category.id === props.draft.reason_category_id)?.label || null
 })
 
 //
@@ -155,5 +123,15 @@ const resultLabel = computed(() => {
     ADJUSTMENT: 'Ajuste',
     INTERNAL: 'Ingreso interno'
   }[props.draft.movement_type]
+})
+
+const resultBadgeClass = computed(() => {
+  const base = 'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold'
+
+  return {
+    TRANSFER: `${base} bg-[#DBEAFE] text-[#1D4ED8]`,
+    ADJUSTMENT: `${base} bg-[#FEE2E2] text-[#DC2626]`,
+    INTERNAL: `${base} bg-[#DCFCE7] text-[#16A34A]`
+  }[props.draft.movement_type] || `${base} bg-[#E5E7EB] text-[#4B5563]`
 })
 </script>

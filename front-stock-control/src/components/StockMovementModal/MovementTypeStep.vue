@@ -1,40 +1,35 @@
 <!-- src/components/movements/MovementTypeStep.vue -->
 <template>
   <div class="flex flex-col gap-6">
-
-    <!-- Selección de tipo de movimiento -->
     <div>
-      <h3 class="font-semibold text-lg mb-2">Tipo de movimiento</h3>
+      <h3 class="mb-3 text-lg font-semibold text-[var(--color-text-base)]">Tipo de movimiento</h3>
 
-      <div class="grid grid-cols-3 gap-3">
+      <div class="grid gap-3 md:grid-cols-3">
         <button
           v-for="t in movementTypes"
           :key="t.value"
-          class="p-3 border rounded-lg text-sm font-medium transition-all"
+          class="rounded-[24px] border px-4 py-4 text-left text-sm font-medium transition-all"
           :class="{
-            'bg-blue-600 text-white border-blue-600': movementType === t.value,
-            'bg-white text-gray-800 border-gray-300 hover:bg-gray-100': movementType !== t.value
+            'border-[var(--color-primary)] bg-[#EAF2FF] text-[var(--color-primary)] shadow-[var(--shadow-card)]': movementType === t.value,
+            'border-[var(--color-border)] bg-white text-[var(--color-text-base)] hover:border-[#CFE0FF] hover:bg-[#F8FBFF]': movementType !== t.value
           }"
           @click="setMovementType(t.value)"
         >
-          {{ t.label }}
+          <p class="font-semibold">{{ t.label }}</p>
+          <p class="mt-1 text-xs opacity-80">{{ t.description }}</p>
         </button>
       </div>
     </div>
 
-    <!-- Selección de sucursal/es -->
-    <div>
-      <h3 class="font-semibold text-lg mb-2">Sucursal</h3>
+    <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+      <h3 class="mb-4 text-lg font-semibold text-[var(--color-text-base)]">Sucursal</h3>
 
-      <!-- TRANSFER → origen + destino -->
-      <div v-if="movementType === 'TRANSFER'" class="grid grid-cols-2 gap-4">
-
-        <!-- Origen -->
+      <div v-if="movementType === 'TRANSFER'" class="grid gap-4 md:grid-cols-2">
         <div>
-          <label class="text-sm text-gray-600 mb-1 block">Sucursal origen</label>
+          <label class="mb-2 block text-sm font-medium text-[var(--color-text-base)]">Sucursal origen</label>
           <select
             v-model="localFromBranchId"
-            class="border rounded-lg w-full px-3 py-2"
+            class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
           >
             <option :value="null">Seleccionar...</option>
             <option
@@ -47,12 +42,11 @@
           </select>
         </div>
 
-        <!-- Destino -->
         <div>
-          <label class="text-sm text-gray-600 mb-1 block">Sucursal destino</label>
+          <label class="mb-2 block text-sm font-medium text-[var(--color-text-base)]">Sucursal destino</label>
           <select
             v-model="localToBranchId"
-            class="border rounded-lg w-full px-3 py-2"
+            class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
           >
             <option :value="null">Seleccionar...</option>
             <option
@@ -67,12 +61,11 @@
         </div>
       </div>
 
-      <!-- ADJUSTMENT / INTERNAL → una sola sucursal -->
-      <div v-else class="w-64">
-        <label class="text-sm text-gray-600 mb-1 block">Sucursal</label>
+      <div v-else class="max-w-sm">
+        <label class="mb-2 block text-sm font-medium text-[var(--color-text-base)]">Sucursal</label>
         <select
           v-model="localFromBranchId"
-          class="border rounded-lg w-full px-3 py-2"
+          class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
         >
           <option :value="null">Seleccionar...</option>
           <option
@@ -86,35 +79,39 @@
       </div>
     </div>
 
-    <!-- Motivo (reason_category), depende del movimiento -->
-    <div v-if="reasonOptions.length > 0">
-      <h3 class="font-semibold text-lg mb-2">Motivo del movimiento</h3>
+    <div v-if="movementType !== 'TRANSFER'" class="max-w-md">
+      <div class="mb-2 flex items-center justify-between gap-3">
+        <h3 class="text-lg font-semibold text-[var(--color-text-base)]">Motivo del movimiento</h3>
+        <span v-if="loadingReasonCategories" class="text-xs text-[var(--color-text-muted)]">Cargando motivos...</span>
+      </div>
       <select
-        v-model="localReasonCategory"
-        class="border rounded-lg px-3 py-2 w-72"
+        v-model="localReasonCategoryId"
+        class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+        :disabled="loadingReasonCategories || reasonOptions.length === 0"
       >
         <option :value="null">Seleccionar motivo...</option>
         <option
           v-for="opt in reasonOptions"
-          :key="opt.value"
-          :value="opt.value"
+          :key="opt.id"
+          :value="opt.id"
         >
           {{ opt.label }}
         </option>
       </select>
+      <p v-if="!loadingReasonCategories && reasonOptions.length === 0" class="mt-2 text-sm text-[var(--color-text-muted)]">
+        No hay motivos configurados para este tipo de movimiento.
+      </p>
     </div>
 
-    <!-- Descripción libre -->
     <div>
-      <h3 class="font-semibold text-lg mb-2">Descripción (opcional)</h3>
+      <h3 class="mb-2 text-lg font-semibold text-[var(--color-text-base)]">Descripción</h3>
       <textarea
         v-model="localReason"
         rows="3"
-        class="border rounded-lg w-full px-3 py-2"
+        class="w-full rounded-[24px] border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
         placeholder="Describe brevemente el motivo..."
       ></textarea>
     </div>
-
   </div>
 </template>
 
@@ -125,80 +122,58 @@ const props = defineProps({
   movementType: String,
   fromBranchId: Number,
   toBranchId: Number,
-  reasonCategory: String,
+  reasonCategoryId: Number,
   reason: String,
-  branches: Array
+  branches: Array,
+  reasonCategories: { type: Array, default: () => [] },
+  loadingReasonCategories: { type: Boolean, default: false }
 })
 
 const emit = defineEmits([
   'update:movementType',
   'update:fromBranchId',
   'update:toBranchId',
-  'update:reasonCategory',
+  'update:reasonCategoryId',
   'update:reason'
 ])
 
-// -----------------------------
-// ESTADOS LOCALES
-// -----------------------------
 const localMovementType = ref(props.movementType)
 const localFromBranchId = ref(props.fromBranchId)
 const localToBranchId = ref(props.toBranchId)
-const localReasonCategory = ref(props.reasonCategory)
+const localReasonCategoryId = ref(props.reasonCategoryId)
 const localReason = ref(props.reason)
 
-// -----------------------------
-// TIPOS DE MOVIMIENTO
-// -----------------------------
 const movementTypes = [
-  { value: 'TRANSFER', label: 'Traslado' },
-  { value: 'ADJUSTMENT', label: 'Ajuste' },
-  { value: 'INTERNAL', label: 'Interno' }
+  { value: 'TRANSFER', label: 'Traslado', description: 'Descuenta stock en origen y acredita en destino.' },
+  { value: 'ADJUSTMENT', label: 'Ajuste', description: 'Corrige diferencias o mermas de inventario.' },
+  { value: 'INTERNAL', label: 'Interno', description: 'Registra ingresos internos en una sucursal.' }
 ]
 
-// -----------------------------
-// OPCIONES DE MOTIVO
-// -----------------------------
 const reasonOptions = computed(() => {
-  if (localMovementType.value === 'ADJUSTMENT') {
-    return [
-      { value: 'EXPIRED', label: 'Vencido' },
-      { value: 'BROKEN', label: 'Roto' },
-      { value: 'BOX_FINISHED', label: 'Caja terminada' }
-    ]
-  }
-
-  if (localMovementType.value === 'INTERNAL') {
-    return [
-      { value: 'SUPPLIER_UNLOAD', label: 'Descarga proveedor' },
-      { value: 'OTHER_INCOME', label: 'Otros ingresos' }
-    ]
-  }
-
-  // TRANSFER → sin motivos
-  return []
+  return props.reasonCategories.filter(category => category.movement_type === localMovementType.value)
 })
 
-// -----------------------------
-// EVENTOS → sincronicemos con el padre
-// -----------------------------
 watch(localMovementType, val => emit('update:movementType', val))
 watch(localFromBranchId, val => emit('update:fromBranchId', val))
 watch(localToBranchId, val => emit('update:toBranchId', val))
-watch(localReasonCategory, val => emit('update:reasonCategory', val))
+watch(localReasonCategoryId, val => emit('update:reasonCategoryId', val))
 watch(localReason, val => emit('update:reason', val))
 
-// Cuando cambia el tipo de movimiento → limpiar campos no válidos
+watch(() => props.movementType, val => { localMovementType.value = val })
+watch(() => props.fromBranchId, val => { localFromBranchId.value = val })
+watch(() => props.toBranchId, val => { localToBranchId.value = val })
+watch(() => props.reasonCategoryId, val => { localReasonCategoryId.value = val })
+watch(() => props.reason, val => { localReason.value = val })
+
 const setMovementType = (type) => {
   localMovementType.value = type
 
-  // Reset automático según reglas
   if (type !== 'TRANSFER') {
     localToBranchId.value = null
   }
 
-  if (type === 'TRANSFER') {
-    localReasonCategory.value = null
+  if (!reasonOptions.value.some(option => option.id === localReasonCategoryId.value)) {
+    localReasonCategoryId.value = null
   }
 }
 </script>

@@ -6,7 +6,7 @@
       custom
       v-slot="{ navigate, href, isActive: linkIsActive }"
     >
-      <a :href="href" @click="navigate" :class="linkClasses(active ?? linkIsActive)">
+      <a :href="href" @click="handleNavigate($event, navigate)" :class="linkClasses(active ?? linkIsActive)">
         <i :class="`i-lucide-${icon} text-base`"></i>
         <span class="text-sm font-medium">{{ label }}</span>
       </a>
@@ -44,7 +44,7 @@ const props = defineProps({
   open: { type: Boolean, default: false }
 })
 
-defineEmits(['toggle'])
+const emit = defineEmits(['toggle', 'navigate'])
 
 const linkClasses = (isActive) => [
   'flex items-center gap-3 px-3 py-2 rounded-lg transition-all w-full text-left',
@@ -55,6 +55,11 @@ const linkClasses = (isActive) => [
 
 const slots = useSlots()
 const hasDropdown = computed(() => !!slots.default)
+
+const handleNavigate = (event, navigate) => {
+  navigate(event)
+  emit('navigate')
+}
 </script>
 
 <style scoped>

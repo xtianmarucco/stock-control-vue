@@ -37,6 +37,24 @@ const findAll = async (filters = {}) => {
 const findById = (id) =>
   prisma.stock_movements.findUnique({ where: { id }, include: MOVEMENT_INCLUDE })
 
+const findReasonCategoryById = (id) =>
+  prisma.reason_categories.findUnique({ where: { id } })
+
+const findSourceStock = async (branchId, productIds) => {
+  if (!productIds.length) return []
+
+  return prisma.branch_stock.findMany({
+    where: {
+      branch_id: branchId,
+      product_id: { in: productIds }
+    },
+    select: {
+      product_id: true,
+      total: true
+    }
+  })
+}
+
 const createWithItems = async ({ movement_type, from_branch_id, to_branch_id, reason_category_id, reason, items, user_id }) =>
   prisma.$transaction(async (tx) => {
     const movement = await tx.stock_movements.create({
@@ -81,4 +99,10 @@ async function upsertStock(tx, branchId, productId, quantity) {
   }
 }
 
-module.exports = { findAll, findById, createWithItems }
+module.exports = {
+  findAll,
+  findById,
+  findReasonCategoryById,
+  findSourceStock,
+  createWithItems
+}

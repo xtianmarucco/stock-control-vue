@@ -1,175 +1,321 @@
 <template>
-  <div class="flex gap-6 p-6 bg-gray-50 min-h-screen bg-white shadow p-6">
-    <!-- COLUMNA IZQUIERDA: Categorías -->
-    <aside class="w-64 flex-shrink-0">
-      <h2 class="text-lg font-semibold mb-3">Categorías</h2>
+  <div class="space-y-6">
+    <section class="rounded-[32px] border border-[var(--color-border)] bg-white px-6 py-6 shadow-[0_24px_50px_rgba(15,35,64,0.08)] sm:px-8">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p class="text-sm font-medium text-[var(--color-primary)]">Inventario por sucursal</p>
+          <h1 class="mt-1 text-3xl font-bold text-[var(--color-text-base)]">
+            Gestión de productos
+            <span v-if="branchName" class="text-[var(--color-primary)]">— {{ branchName }}</span>
+          </h1>
+          <p class="mt-2 max-w-2xl text-sm text-[var(--color-text-muted)]">
+            Consultá el stock disponible, filtrá por categoría y detectá rápido productos con nivel crítico.
+          </p>
+        </div>
 
-      <div class="flex flex-col gap-2">
-        <button
-          class="w-full py-2 px-3 rounded-lg border text-sm font-medium transition-all duration-150"
-          :class="{
-            'bg-blue-600 text-white': selectedCategory === null,
-            'bg-white hover:bg-gray-100 text-gray-800 border-gray-300': selectedCategory !== null
-          }"
-          @click="selectCategory(null)"
-        >
-          Todos
-        </button>
-
-        <button
-          v-for="cat in categories"
-          :key="cat"
-          class="w-full py-2 px-3 rounded-lg border text-sm font-medium transition-all duration-150 text-left truncate"
-          :class="{
-            'bg-blue-600 text-white': selectedCategory === cat,
-            'bg-white hover:bg-gray-100 text-gray-800 border-gray-300': selectedCategory !== cat
-          }"
-          @click="selectCategory(cat)"
-        >
-          {{ cat }}
-        </button>
+        <div class="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
+          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Productos visibles</p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ filteredProducts.length }}</p>
+          </div>
+          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Categorías</p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ categories.length }}</p>
+          </div>
+          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Stock crítico</p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ lowStockCount }}</p>
+          </div>
+        </div>
       </div>
-    </aside>
+    </section>
 
-    <!-- COLUMNA DERECHA: Tabla -->
-    <section class="flex-1 bg-white rounded-xl shadow p-6">
-      <!-- ✅ Cabecera dinámica -->
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-2xl font-semibold">
-          Gestión de Productos
-          <span v-if="branchName" class="text-blue-600 font-normal text-lg">
-            — {{ branchName }}
+    <section class="grid gap-6 xl:items-start xl:grid-cols-[290px_minmax(0,1fr)]">
+      <aside class="self-start rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-semibold text-[var(--color-text-base)]">Categorías</h2>
+            <p class="mt-1 text-sm text-[var(--color-text-muted)]">Filtrá el listado por familia de producto.</p>
+          </div>
+          <span class="rounded-full bg-[#EAF2FF] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
+            {{ categories.length + 1 }}
           </span>
-        </h2>
-      </div>
+        </div>
 
-      <!-- Barra de búsqueda -->
-      <div class="flex items-center mb-4">
-        <input
-          v-model="searchTerm"
-          type="text"
-          placeholder="Buscar producto..."
-          class="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring focus:ring-blue-100 outline-none"
-        />
-      </div>
+        <div class="mt-5 flex flex-col gap-2">
+          <button
+            class="w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition"
+            :class="selectedCategory === null
+              ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-[0_18px_30px_rgba(20,121,255,0.22)]'
+              : 'border-[var(--color-border)] bg-[#FAFBFE] text-[var(--color-text-base)] hover:border-[#CFE0FF] hover:bg-[#F7FAFF]'"
+            @click="selectCategory(null)"
+          >
+            Todos
+          </button>
 
-      <!-- Tabla -->
-      <div class="overflow-x-auto rounded-lg border border-gray-200">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-100 border-b border-gray-200">
-            <tr>
-              <th class="px-4 py-3 font-medium text-gray-700 uppercase">Producto</th>
-              <th class="px-4 py-3 font-medium text-gray-700 uppercase">Categoría</th>
-              <th class="px-4 py-3 font-medium text-gray-700 uppercase text-right">Stock Total</th>
-            </tr>
-          </thead>
+          <button
+            v-for="cat in categories"
+            :key="cat"
+            class="w-full rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition"
+            :class="selectedCategory === cat
+              ? 'border-[var(--color-primary)] bg-[var(--color-primary)] text-white shadow-[0_18px_30px_rgba(20,121,255,0.22)]'
+              : 'border-[var(--color-border)] bg-[#FAFBFE] text-[var(--color-text-base)] hover:border-[#CFE0FF] hover:bg-[#F7FAFF]'"
+            @click="selectCategory(cat)"
+          >
+            {{ cat }}
+          </button>
+        </div>
+      </aside>
 
-          <tbody v-if="filteredProducts.length > 0">
-            <tr
-              v-for="prod in filteredProducts"
-              :key="prod.id"
-              class="border-b border-gray-100 hover:bg-gray-50 transition-colors"
+      <div class="min-w-0 space-y-5 self-start">
+        <section class="rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div class="flex flex-wrap items-center gap-3">
+              <span
+                class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+                :class="selectedCategory
+                  ? 'bg-[#EAF2FF] text-[var(--color-primary)]'
+                  : 'bg-[#EEF3FA] text-[var(--color-text-muted)]'"
+              >
+                {{ selectedCategory || 'Todas las categorías' }}
+              </span>
+              <span class="text-sm text-[var(--color-text-muted)]">
+                {{ stockSummaryText }}
+              </span>
+            </div>
+
+            <div class="relative w-full lg:max-w-md">
+              <input
+                v-model="searchTerm"
+                type="text"
+                placeholder="Buscar producto por nombre..."
+                class="w-full rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3 pr-11 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+              />
+              <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]">⌕</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
+          <div v-if="loading" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-10 text-center text-sm text-[var(--color-text-muted)]">
+            Cargando productos de la sucursal...
+          </div>
+
+          <div v-else-if="filteredProducts.length === 0" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-10 text-center">
+            <p class="text-base font-semibold text-[var(--color-text-base)]">No se encontraron productos</p>
+            <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+              Probá cambiar la categoría o ajustar el término de búsqueda.
+            </p>
+          </div>
+
+          <div v-else class="overflow-hidden rounded-[28px] border border-[var(--color-border)] bg-white">
+            <div class="flex flex-col gap-3 border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4 md:flex-row md:items-center md:justify-between">
+              <p class="text-sm text-[var(--color-text-muted)]">
+                Mostrando {{ paginationLabel }}
+              </p>
+
+              <label class="flex items-center gap-3 text-sm text-[var(--color-text-base)]">
+                <span class="font-medium">Por página</span>
+                <select
+                  v-model.number="pageSize"
+                  class="rounded-2xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+                >
+                  <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="hidden grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_120px] border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:grid">
+              <span>Producto</span>
+              <span>Categoría</span>
+              <span class="text-right">Stock total</span>
+            </div>
+
+            <div class="divide-y divide-[var(--color-border)]">
+              <article
+                v-for="prod in paginatedProducts"
+                :key="prod.id"
+                class="grid gap-3 px-5 py-4 transition hover:bg-[#FAFCFF] md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_120px] md:items-center"
+              >
+                <div class="min-w-0">
+                  <p class="text-base font-semibold leading-snug text-[var(--color-text-base)] md:max-w-[28rem]">
+                    {{ prod.name }}
+                  </p>
+                  <p class="mt-1 text-sm text-[var(--color-text-muted)] md:hidden">{{ prod.category_name }}</p>
+                </div>
+
+                <div class="hidden md:block">
+                  <span class="inline-flex rounded-full bg-[#EEF3FA] px-3 py-1 text-xs font-semibold text-[var(--color-text-base)]">
+                    {{ prod.category_name }}
+                  </span>
+                </div>
+
+                <div class="flex items-center justify-between md:justify-end">
+                  <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:hidden">Stock</span>
+                  <span
+                    class="inline-flex min-w-[74px] items-center justify-center rounded-full px-3 py-1.5 text-sm font-semibold"
+                    :class="prod.low_stock
+                      ? 'bg-[#FEE2E2] text-[#DC2626]'
+                      : 'bg-[#DCFCE7] text-[#16A34A]'"
+                  >
+                    {{ prod.total }}
+                  </span>
+                </div>
+              </article>
+            </div>
+
+            <div
+              v-if="totalPages > 1"
+              class="flex flex-col gap-3 border-t border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4 md:flex-row md:items-center md:justify-between"
             >
-              <td class="px-4 py-3 text-gray-800">{{ prod.name }}</td>
-              <td class="px-4 py-3 text-gray-600">{{ prod.category_name }}</td>
-              <td class="px-4 py-3 text-right font-semibold text-gray-900">{{ prod.total }}</td>
-            </tr>
-          </tbody>
+              <p class="text-sm text-[var(--color-text-muted)]">
+                Página {{ currentPage }} de {{ totalPages }}
+              </p>
 
-          <tbody v-else>
-            <tr>
-              <td colspan="3" class="text-center py-6 text-gray-500">
-                No se encontraron productos
-              </td>
-            </tr>
-          </tbody>
-        </table>
+              <div class="flex items-center gap-2">
+                <button
+                  type="button"
+                  class="rounded-2xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-base)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="currentPage === 1"
+                  @click="goToPreviousPage"
+                >
+                  Anterior
+                </button>
+
+                <span class="rounded-full bg-white px-3 py-1 text-sm font-semibold text-[var(--color-text-base)]">
+                  {{ currentPage }}
+                </span>
+
+                <button
+                  type="button"
+                  class="rounded-2xl border border-[var(--color-border)] px-4 py-2 text-sm font-semibold text-[var(--color-text-base)] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                  :disabled="currentPage === totalPages"
+                  @click="goToNextPage"
+                >
+                  Siguiente
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
     </section>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch, computed as c } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getStockByBranch } from '../services/ProductService.js'
 import { getStockSummaryByCategory } from '../services/stockService.js'
-import { getBranchById } from '../services/BranchService.js' // ✅ Nuevo servicio
+import { getBranchById } from '../services/BranchService.js'
 
 const route = useRoute()
 
-// ✅ branchId reactivo
-const branchId = c(() => Number(route.params.branchId))
+const branchId = computed(() => Number(route.params.branchId))
 
-// 🔄 Estados
 const branchName = ref('')
 const products = ref([])
 const categories = ref([])
 const selectedCategory = ref(null)
 const searchTerm = ref('')
 const loading = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(25)
+const pageSizeOptions = [10, 25, 50, 100]
 
-// 🚀 Cargar nombre de la branch
+const filteredProducts = computed(() => {
+  if (!searchTerm.value) return products.value
+  const query = searchTerm.value.toLowerCase()
+  return products.value.filter(product => product.name.toLowerCase().includes(query))
+})
+
+const totalPages = computed(() => Math.max(1, Math.ceil(filteredProducts.value.length / pageSize.value)))
+
+const paginatedProducts = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return filteredProducts.value.slice(start, start + pageSize.value)
+})
+
+const lowStockCount = computed(() => products.value.filter(product => product.low_stock).length)
+const totalUnits = computed(() => products.value.reduce((acc, product) => acc + (product.total || 0), 0))
+const stockSummaryText = computed(() => `${products.value.length} productos • ${totalUnits.value} unidades`)
+const paginationLabel = computed(() => {
+  if (!filteredProducts.value.length) return '0 resultados'
+
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, filteredProducts.value.length)
+
+  return `${start}-${end} de ${filteredProducts.value.length} productos`
+})
+
 const fetchBranchName = async () => {
   try {
     const data = await getBranchById(branchId.value)
     branchName.value = data.name
   } catch (err) {
-    console.error('❌ Error fetching branch name:', err)
+    console.error('Error fetching branch name:', err)
     branchName.value = ''
   }
 }
 
-// 🚀 Cargar productos del branch
 const fetchProducts = async () => {
   loading.value = true
   try {
     const response = await getStockByBranch(branchId.value, selectedCategory.value)
-    branchName.value = response.branch.name       // ✅ acá obtenés el nombre
+    branchName.value = response.branch.name
     products.value = response.products
   } catch (err) {
-    console.error('❌ Error fetching products:', err)
+    console.error('Error fetching products:', err)
     products.value = []
   } finally {
     loading.value = false
   }
 }
 
-// 🚀 Cargar categorías del branch
 const fetchCategories = async () => {
   try {
     const data = await getStockSummaryByCategory(branchId.value)
     categories.value = data.map(item => item.category)
   } catch (err) {
-    console.error('❌ Error fetching categories:', err)
+    console.error('Error fetching categories:', err)
     categories.value = []
   }
 }
 
-// 🔍 Filtro de búsqueda
-const filteredProducts = computed(() => {
-  if (!searchTerm.value) return products.value
-  const query = searchTerm.value.toLowerCase()
-  return products.value.filter(p => p.name.toLowerCase().includes(query))
-})
-
-// 🖱️ Seleccionar categoría
-const selectCategory = (cat) => {
-  selectedCategory.value = cat
+const selectCategory = (category) => {
+  selectedCategory.value = category
 }
 
-// 👀 Watchers
-watch([selectedCategory], fetchProducts)
+const goToPreviousPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
 
-// ✅ Reaccionar a cambios de branchId
-watch(branchId, async (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    console.log('🔁 Branch changed:', newVal)
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+watch(selectedCategory, fetchProducts)
+
+watch([searchTerm, selectedCategory, pageSize], () => {
+  currentPage.value = 1
+})
+
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
+
+watch(branchId, async (newValue, oldValue) => {
+  if (newValue !== oldValue) {
+    searchTerm.value = ''
+    selectedCategory.value = null
+    currentPage.value = 1
     await Promise.all([fetchBranchName(), fetchCategories(), fetchProducts()])
   }
 })
 
-// 🧠 Montaje inicial
 onMounted(async () => {
   await Promise.all([fetchBranchName(), fetchCategories(), fetchProducts()])
 })

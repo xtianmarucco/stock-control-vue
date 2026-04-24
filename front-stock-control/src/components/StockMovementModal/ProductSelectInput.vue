@@ -6,21 +6,21 @@
       @focus="open = true"
       @input="onInput"
       placeholder="Buscar producto..."
-      class="w-full border rounded-lg px-3 py-2 text-sm"
+      class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
     />
 
     <ul
       v-if="open && filteredOptions.length > 0"
-      class="absolute z-20 mt-1 max-h-48 w-full overflow-auto bg-white border rounded-lg shadow text-sm"
+      class="absolute z-20 mt-2 max-h-64 w-full overflow-auto rounded-[24px] border border-[var(--color-border)] bg-white p-2 shadow-[0_20px_40px_rgba(15,35,64,0.12)] text-sm"
     >
       <li
         v-for="opt in filteredOptions"
         :key="opt.id"
-        class="px-3 py-2 hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+        class="flex cursor-pointer items-center justify-between rounded-2xl px-3 py-3 transition hover:bg-[#F5F8FF]"
         @click="select(opt)"
       >
-        <span>{{ opt.name }}</span>
-        <span class="text-xs text-gray-500">Stock: {{ opt.total }}</span>
+        <span class="text-[var(--color-text-base)]">{{ opt.name }}</span>
+        <span class="text-xs font-medium text-[var(--color-text-muted)]">Stock: {{ opt.total }}</span>
       </li>
     </ul>
   </div>

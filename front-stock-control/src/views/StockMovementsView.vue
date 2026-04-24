@@ -64,6 +64,22 @@
 
     <!-- Tabla -->
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+      <div class="flex flex-col gap-3 border-b border-gray-100 bg-[#F8FAFD] px-6 py-4 md:flex-row md:items-center md:justify-between">
+        <p class="text-sm text-[var(--color-text-muted)]">
+          Mostrando {{ paginationLabel }}
+        </p>
+
+        <label class="flex items-center gap-3 text-sm text-[#193B68]">
+          <span class="font-medium">Por página</span>
+          <select
+            v-model.number="pageSize"
+            class="rounded-2xl border border-gray-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-[#1479FF] focus:ring-4 focus:ring-[#DCEBFF]"
+          >
+            <option v-for="option in pageSizeOptions" :key="option" :value="option">{{ option }}</option>
+          </select>
+        </label>
+      </div>
+
       <table class="min-w-full text-sm text-left">
         <thead class="border-b border-gray-100">
           <tr>
@@ -77,7 +93,7 @@
         </thead>
         <tbody>
           <tr
-            v-for="mov in movements"
+            v-for="mov in paginatedMovements"
             :key="mov.id"
             class="border-b border-gray-50 hover:bg-gray-50 transition-colors cursor-pointer"
             @click="openDetailModal(mov.id)"
@@ -100,6 +116,39 @@
       <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">
         Cargando...
       </div>
+
+      <div
+        v-if="!loading && totalPages > 1"
+        class="flex flex-col gap-3 border-t border-gray-100 bg-[#F8FAFD] px-6 py-4 md:flex-row md:items-center md:justify-between"
+      >
+        <p class="text-sm text-[var(--color-text-muted)]">
+          Página {{ currentPage }} de {{ totalPages }}
+        </p>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            class="rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-[#193B68] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="currentPage === 1"
+            @click="goToPreviousPage"
+          >
+            Anterior
+          </button>
+
+          <span class="rounded-full bg-white px-3 py-1 text-sm font-semibold text-[#193B68]">
+            {{ currentPage }}
+          </span>
+
+          <button
+            type="button"
+            class="rounded-2xl border border-gray-200 px-4 py-2 text-sm font-semibold text-[#193B68] transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+            :disabled="currentPage === totalPages"
+            @click="goToNextPage"
+          >
+            Siguiente
+          </button>
+        </div>
+      </div>
     </div>
 
     <MovementDetailModal v-model="isDetailModalOpen" :movement-id="selectedMovementId" />
@@ -107,7 +156,6 @@
     <StockMovementModal
       v-if="showMovementModal"
       :branches="branches"
-      :products="products"
       :default-branch-id="Number(filters.branch) || branches[0]?.id"
       @close="showMovementModal = false"
       @saved="onMovementSaved"
@@ -120,17 +168,18 @@ import { ref, onMounted, computed } from 'vue'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
 import { getStockMovements } from '../services/MovementsService.js'
 import { getBranches } from '../services/BranchService.js'
-import { getStockByBranch } from '../services/ProductService.js'
 import StockMovementModal from '../components/StockMovementModal/StockMovementModal.vue'
 
 const movements = ref([])
 const branches = ref([])
-const products = ref([])
 const filters = ref({ branch: '', type: '', from: '', to: '' })
 const loading = ref(false)
 const isDetailModalOpen = ref(false)
 const selectedMovementId = ref(null)
 const showMovementModal = ref(false)
+const currentPage = ref(1)
+const pageSize = ref(25)
+const pageSizeOptions = [10, 25, 50, 100]
 
 const fetchMovements = async () => {
   loading.value = true
@@ -156,19 +205,22 @@ const fetchBranches = async () => {
   }
 }
 
-const fetchProductsForBranch = async () => {
-  const branchId = filters.value.branch ? Number(filters.value.branch) : branches.value[0]?.id
-  if (!branchId) { products.value = []; return }
-  try {
-    products.value = await getStockByBranch(branchId)
-  } catch {
-    products.value = []
-  }
-}
-
 const branchesMap = computed(() =>
   branches.value.reduce((acc, b) => { acc[b.id] = b.name; return acc }, {})
 )
+const totalPages = computed(() => Math.max(1, Math.ceil(movements.value.length / pageSize.value)))
+const paginatedMovements = computed(() => {
+  const start = (currentPage.value - 1) * pageSize.value
+  return movements.value.slice(start, start + pageSize.value)
+})
+const paginationLabel = computed(() => {
+  if (!movements.value.length) return '0 resultados'
+
+  const start = (currentPage.value - 1) * pageSize.value + 1
+  const end = Math.min(currentPage.value * pageSize.value, movements.value.length)
+
+  return `${start}-${end} de ${movements.value.length} movimientos`
+})
 const getBranchName = (id) => branchesMap.value[id] || '—'
 
 const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
@@ -190,11 +242,27 @@ const openDetailModal = (id) => {
 }
 
 const openMovementModal = async () => {
-  await fetchProductsForBranch()
   showMovementModal.value = true
 }
 
 const onMovementSaved = () => fetchMovements()
+const goToPreviousPage = () => {
+  if (currentPage.value > 1) currentPage.value--
+}
+
+const goToNextPage = () => {
+  if (currentPage.value < totalPages.value) currentPage.value++
+}
+
+watch([filters, pageSize], () => {
+  currentPage.value = 1
+}, { deep: true })
+
+watch(totalPages, (pages) => {
+  if (currentPage.value > pages) {
+    currentPage.value = pages
+  }
+})
 
 onMounted(async () => {
   await fetchBranches()
