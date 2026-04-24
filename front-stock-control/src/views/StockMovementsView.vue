@@ -164,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
 import { getStockMovements } from '../services/MovementsService.js'
 import { getBranches } from '../services/BranchService.js'

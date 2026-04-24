@@ -2,6 +2,19 @@ const { PrismaClientKnownRequestError } = require('@prisma/client')
 
 const handleError = (res, err) => {
   if (err instanceof PrismaClientKnownRequestError) {
+    if (err.code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        error: { message: 'Ya existe un registro con ese valor único', code: 'CONFLICT' }
+      })
+    }
+    if (err.code === 'P2025') {
+      return res.status(404).json({
+        success: false,
+        error: { message: 'Registro no encontrado', code: 'NOT_FOUND' }
+      })
+    }
+    console.error('[Prisma error]', err.code, err.meta)
     return res.status(500).json({
       success: false,
       error: { message: 'Database error', code: 'INTERNAL_ERROR' }

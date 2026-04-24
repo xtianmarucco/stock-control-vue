@@ -80,6 +80,7 @@ const handleLogout = async () => {
 
 const pageTitles = {
   Dashboard: 'Dashboard',
+  BranchesView: 'Sucursales',
   BranchProducts: 'Productos',
   StockMovementsView: 'Movimientos de Stock'
 }

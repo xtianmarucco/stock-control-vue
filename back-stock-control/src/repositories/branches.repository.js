@@ -43,4 +43,18 @@ const findStockByBranch = async (branchId, category) => {
   }))
 }
 
-module.exports = { findAll, findById, findStockSummaryByCategory, findStockByBranch }
+const create = (data) =>
+  prisma.branches.create({ data })
+
+const update = (id, data) =>
+  prisma.branches.update({ where: { id }, data })
+
+const remove = (id) =>
+  prisma.$transaction(async (tx) => {
+    await tx.stock_movements.deleteMany({
+      where: { OR: [{ from_branch_id: id }, { to_branch_id: id }] }
+    })
+    return tx.branches.delete({ where: { id } })
+  })
+
+module.exports = { findAll, findById, findStockSummaryByCategory, findStockByBranch, create, update, remove }

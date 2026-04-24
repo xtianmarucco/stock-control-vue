@@ -37,4 +37,31 @@ const getStockByBranch = async (req, res) => {
   }
 }
 
-module.exports = { getAllBranches, getBranchById, getStockSummaryByCategory, getStockByBranch }
+const createBranch = async (req, res) => {
+  try {
+    const data = await service.create(req.body)
+    res.status(201).json({ success: true, data })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
+const updateBranch = async (req, res) => {
+  try {
+    const data = await service.update(Number(req.params.id), req.body)
+    res.json({ success: true, data })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
+const deleteBranch = async (req, res) => {
+  try {
+    await service.remove(Number(req.params.id))
+    res.json({ success: true })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
+module.exports = { getAllBranches, getBranchById, getStockSummaryByCategory, getStockByBranch, createBranch, updateBranch, deleteBranch }

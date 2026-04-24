@@ -27,4 +27,20 @@ const getStockByBranch = async (branchId, category) => {
   }
 }
 
-module.exports = { getAll, getById, getStockSummaryByCategory, getStockByBranch }
+const create = async ({ name, address }) => {
+  if (!name?.trim()) throw createError('Name is required', 'VALIDATION_ERROR', 400)
+  return repo.create({ name: name.trim(), address: address?.trim() || null })
+}
+
+const update = async (id, { name, address }) => {
+  await getById(id)
+  if (!name?.trim()) throw createError('Name is required', 'VALIDATION_ERROR', 400)
+  return repo.update(id, { name: name.trim(), address: address?.trim() || null })
+}
+
+const remove = async (id) => {
+  await getById(id)
+  return repo.remove(id)
+}
+
+module.exports = { getAll, getById, getStockSummaryByCategory, getStockByBranch, create, update, remove }

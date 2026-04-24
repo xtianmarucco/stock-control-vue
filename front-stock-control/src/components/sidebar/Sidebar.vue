@@ -24,6 +24,7 @@
     <div class="flex flex-1 flex-col overflow-hidden px-3 py-4">
       <nav class="flex flex-col gap-1 overflow-y-auto">
         <SidebarItem icon="layout-dashboard" label="Dashboard" to="/dashboard" @navigate="emit('close')" />
+        <SidebarItem icon="store" label="Sucursales" to="/branches" @navigate="emit('close')" />
 
         <SidebarItem
           icon="box"
