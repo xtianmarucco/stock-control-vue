@@ -105,7 +105,7 @@
             </td>
             <td class="px-6 py-4 text-[#193B68]">{{ mov.from_branch_name || getBranchName(mov.from_branch_id) }}</td>
             <td class="px-6 py-4 text-gray-400">{{ mov.to_branch_name || getBranchName(mov.to_branch_id) || '—' }}</td>
-            <td class="px-6 py-4 text-gray-500">{{ mov.created_by?.username || '—' }}</td>
+            <td class="px-6 py-4 text-gray-500">{{ mov.created_by?.full_name || '—' }}</td>
             <td class="px-6 py-4 text-right text-[#193B68] font-medium">{{ mov.items?.length || 0 }}</td>
           </tr>
         </tbody>

@@ -27,14 +27,14 @@ const getRecentMovements = () =>
       sm.created_at,
       fb.name AS from_branch_name,
       tb.name AS to_branch_name,
-      u.username AS created_by,
+      u.full_name AS created_by,
       COUNT(smi.id) AS items_count
     FROM stock_movements sm
     LEFT JOIN branches fb ON sm.from_branch_id = fb.id
     LEFT JOIN branches tb ON sm.to_branch_id = tb.id
     LEFT JOIN users u ON sm.user_id = u.id
     LEFT JOIN stock_movement_items smi ON smi.movement_id = sm.id
-    GROUP BY sm.id, fb.name, tb.name, u.username
+    GROUP BY sm.id, fb.name, tb.name, u.full_name
     ORDER BY sm.created_at DESC
     LIMIT 8
   `

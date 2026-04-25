@@ -78,7 +78,7 @@
             <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
               <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Registrado por</p>
               <p class="mt-2 text-base font-semibold text-[var(--color-text-base)]">
-                {{ movement.created_by?.username || '—' }}
+                {{ movement.created_by?.full_name || '—' }}
               </p>
               <p class="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Productos</p>
               <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ movement.items?.length || 0 }}</p>

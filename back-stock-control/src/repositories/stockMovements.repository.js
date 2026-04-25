@@ -4,8 +4,25 @@ const MOVEMENT_INCLUDE = {
   items: { include: { product: true } },
   fromBranch: true,
   toBranch: true,
-  reasonCategory: true,
-  createdBy: { select: { id: true, username: true } }
+  reasonCategory: true
+}
+
+const enrichWithUser = async (movements) => {
+  const arr = Array.isArray(movements) ? movements : [movements]
+  const ids = [...new Set(arr.map(m => m.user_id).filter(Boolean))]
+
+  const userMap = new Map()
+  if (ids.length) {
+    const users = await prisma.$queryRaw`SELECT id, full_name FROM users WHERE id = ANY(${ids}::int[])`
+    users.forEach(u => userMap.set(Number(u.id), u))
+  }
+
+  const enriched = arr.map(m => ({
+    ...m,
+    createdBy: m.user_id ? (userMap.get(Number(m.user_id)) ?? null) : null
+  }))
+
+  return Array.isArray(movements) ? enriched : enriched[0]
 }
 
 const findAll = async (filters = {}) => {
@@ -27,15 +44,20 @@ const findAll = async (filters = {}) => {
     }
   }
 
-  return prisma.stock_movements.findMany({
+  const movements = await prisma.stock_movements.findMany({
     where,
     include: MOVEMENT_INCLUDE,
     orderBy: { created_at: 'desc' }
   })
+
+  return enrichWithUser(movements)
 }
 
-const findById = (id) =>
-  prisma.stock_movements.findUnique({ where: { id }, include: MOVEMENT_INCLUDE })
+const findById = async (id) => {
+  const movement = await prisma.stock_movements.findUnique({ where: { id }, include: MOVEMENT_INCLUDE })
+  if (!movement) return null
+  return enrichWithUser([movement]).then(arr => arr[0])
+}
 
 const findReasonCategoryById = (id) =>
   prisma.reason_categories.findUnique({ where: { id } })
