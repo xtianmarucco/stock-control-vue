@@ -12,7 +12,8 @@ const getAllUsers = async (req, res) => {
 
 const createUser = async (req, res) => {
   try {
-    const data = await service.create(req.body)
+    const { email, full_name, dni, password, role } = req.body
+    const data = await service.create({ email, fullName: full_name, dni, password, role })
     res.status(201).json({ success: true, data })
   } catch (err) {
     handleError(res, err)
@@ -21,7 +22,8 @@ const createUser = async (req, res) => {
 
 const updateUser = async (req, res) => {
   try {
-    const data = await service.update(Number(req.params.id), req.body)
+    const { email, full_name, dni, password, role } = req.body
+    const data = await service.update(Number(req.params.id), { email, fullName: full_name, dni, password, role })
     res.json({ success: true, data })
   } catch (err) {
     handleError(res, err)

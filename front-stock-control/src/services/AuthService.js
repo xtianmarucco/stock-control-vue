@@ -1,7 +1,7 @@
 import apiClient from './apiClient'
 
-export const login = async (username, password) => {
-  const res = await apiClient.post('/auth/login', { username, password })
+export const login = async (email, password) => {
+  const res = await apiClient.post('/auth/login', { email, password })
   return res.data.data
 }
 

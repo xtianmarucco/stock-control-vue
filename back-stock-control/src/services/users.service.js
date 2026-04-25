@@ -4,6 +4,8 @@ const { createError } = require('../utils/handleError')
 
 const VALID_ROLES = ['admin', 'colaborador']
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+
 const getAll = () => repo.findAll()
 
 const getById = async (id) => {
@@ -12,28 +14,41 @@ const getById = async (id) => {
   return user
 }
 
-const create = async ({ username, password, role }) => {
-  if (!username?.trim()) throw createError('Username is required', 'VALIDATION_ERROR', 400)
-  if (!password) throw createError('Password is required', 'VALIDATION_ERROR', 400)
-  if (!VALID_ROLES.includes(role)) throw createError('Invalid role', 'VALIDATION_ERROR', 400)
+const create = async ({ email, fullName, dni, password, role }) => {
+  if (!email?.trim() || !isValidEmail(email.trim()))
+    throw createError('Valid email is required', 'VALIDATION_ERROR', 400)
+  if (!fullName?.trim())
+    throw createError('Full name is required', 'VALIDATION_ERROR', 400)
+  if (!dni?.trim())
+    throw createError('DNI is required', 'VALIDATION_ERROR', 400)
+  if (!password)
+    throw createError('Password is required', 'VALIDATION_ERROR', 400)
+  if (!VALID_ROLES.includes(role))
+    throw createError('Invalid role', 'VALIDATION_ERROR', 400)
 
-  const existing = await repo.findByUsername(username.trim())
-  if (existing) throw createError('Username already taken', 'CONFLICT', 409)
+  const existing = await repo.findByEmail(email.trim())
+  if (existing) throw createError('Email already in use', 'CONFLICT', 409)
 
   const passwordHash = await bcrypt.hash(password, 10)
-  return repo.create({ username: username.trim(), passwordHash, role })
+  return repo.create({ email: email.trim().toLowerCase(), fullName: fullName.trim(), dni: dni.trim(), passwordHash, role })
 }
 
-const update = async (id, { username, password, role }) => {
+const update = async (id, { email, fullName, dni, password, role }) => {
   await getById(id)
-  if (!username?.trim()) throw createError('Username is required', 'VALIDATION_ERROR', 400)
-  if (!VALID_ROLES.includes(role)) throw createError('Invalid role', 'VALIDATION_ERROR', 400)
+  if (!email?.trim() || !isValidEmail(email.trim()))
+    throw createError('Valid email is required', 'VALIDATION_ERROR', 400)
+  if (!fullName?.trim())
+    throw createError('Full name is required', 'VALIDATION_ERROR', 400)
+  if (!dni?.trim())
+    throw createError('DNI is required', 'VALIDATION_ERROR', 400)
+  if (!VALID_ROLES.includes(role))
+    throw createError('Invalid role', 'VALIDATION_ERROR', 400)
 
-  const existing = await repo.findByUsername(username.trim())
-  if (existing && existing.id !== id) throw createError('Username already taken', 'CONFLICT', 409)
+  const existing = await repo.findByEmail(email.trim())
+  if (existing && existing.id !== id) throw createError('Email already in use', 'CONFLICT', 409)
 
   const passwordHash = password ? await bcrypt.hash(password, 10) : null
-  return repo.update(id, { username: username.trim(), passwordHash, role })
+  return repo.update(id, { email: email.trim().toLowerCase(), fullName: fullName.trim(), dni: dni.trim(), passwordHash, role })
 }
 
 const remove = async (id, currentUserId) => {

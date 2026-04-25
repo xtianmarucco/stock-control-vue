@@ -6,13 +6,13 @@
 
       <form @submit.prevent="handleSubmit" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-[#193B68] mb-1">Usuario</label>
+          <label class="block text-sm font-medium text-[#193B68] mb-1">Email</label>
           <input
-            v-model="username"
-            type="text"
-            autocomplete="username"
+            v-model="email"
+            type="email"
+            autocomplete="email"
             class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
-            placeholder="Nombre de usuario"
+            placeholder="usuario@email.com"
             required
           />
         </div>
@@ -51,17 +51,17 @@ import { useAuthStore } from '../stores/authStore'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const username = ref('')
+const email = ref('')
 const password = ref('')
 const error = ref('')
 
 const handleSubmit = async () => {
   error.value = ''
   try {
-    await authStore.login(username.value, password.value)
+    await authStore.login(email.value, password.value)
     router.push('/dashboard')
   } catch (err) {
-    error.value = err.response?.data?.error?.message || 'Error al ingresar'
+    error.value = err.response?.data?.error?.message || 'Credenciales incorrectas'
   }
 }
 </script>

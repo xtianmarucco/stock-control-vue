@@ -19,7 +19,9 @@
         <table class="min-w-full text-sm text-left">
           <thead class="border-b border-gray-100">
             <tr>
-              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Usuario</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Nombre</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Email</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">DNI</th>
               <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Rol</th>
               <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Creado</th>
               <th v-if="isAdmin" class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Acciones</th>
@@ -32,9 +34,11 @@
               class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
               <td class="px-6 py-4 font-medium text-[#193B68]">
-                {{ user.username }}
+                {{ user.full_name }}
                 <span v-if="user.id === authStore.user?.id" class="ml-2 text-xs text-gray-400">(vos)</span>
               </td>
+              <td class="px-6 py-4 text-gray-500">{{ user.email }}</td>
+              <td class="px-6 py-4 text-gray-500">{{ user.dni || '—' }}</td>
               <td class="px-6 py-4">
                 <span
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
@@ -80,19 +84,44 @@
           <div class="space-y-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-semibold text-[#193B68]">
-                Usuario <span class="text-red-500">*</span>
+                Nombre completo <span class="text-red-500">*</span>
               </label>
               <input
-                v-model="form.username"
+                v-model="form.full_name"
                 type="text"
-                placeholder="Ej: juan.perez"
+                placeholder="Ej: Juan Pérez"
                 class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
               />
             </div>
 
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-semibold text-[#193B68]">
-                Contraseña <span v-if="!editTarget" class="text-red-500">*</span>
+                Email <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="form.email"
+                type="email"
+                placeholder="Ej: juan@empresa.com"
+                class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-semibold text-[#193B68]">
+                DNI <span class="text-red-500">*</span>
+              </label>
+              <input
+                v-model="form.dni"
+                type="text"
+                placeholder="Ej: 30123456"
+                class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
+              />
+            </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-semibold text-[#193B68]">
+                Contraseña
+                <span v-if="!editTarget" class="text-red-500">*</span>
                 <span v-else class="text-gray-400 font-normal">(dejar vacío para no cambiar)</span>
               </label>
               <input
@@ -141,7 +170,7 @@
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
           <h2 class="text-lg font-bold text-[#193B68]">Eliminar usuario</h2>
           <p class="text-sm text-gray-500">
-            ¿Estás seguro de eliminar al usuario <strong class="text-[#193B68]">{{ deleteTarget.username }}</strong>?
+            ¿Estás seguro de eliminar a <strong class="text-[#193B68]">{{ deleteTarget.full_name }}</strong>?
             <span class="font-semibold text-red-600">No se puede deshacer.</span>
           </p>
           <div class="flex justify-end gap-3 pt-1">
@@ -182,7 +211,9 @@ const deleteTarget = ref(null)
 const saving = ref(false)
 const deleting = ref(false)
 const formError = ref('')
-const form = ref({ username: '', password: '', role: 'colaborador' })
+const form = ref({ full_name: '', email: '', dni: '', password: '', role: 'colaborador' })
+
+const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
 
 const fetchUsers = async () => {
   loading.value = true
@@ -197,14 +228,14 @@ const fetchUsers = async () => {
 
 const openCreate = () => {
   editTarget.value = null
-  form.value = { username: '', password: '', role: 'colaborador' }
+  form.value = { full_name: '', email: '', dni: '', password: '', role: 'colaborador' }
   formError.value = ''
   showModal.value = true
 }
 
 const openEdit = (user) => {
   editTarget.value = user
-  form.value = { username: user.username, password: '', role: user.role }
+  form.value = { full_name: user.full_name, email: user.email, dni: user.dni || '', password: '', role: user.role }
   formError.value = ''
   showModal.value = true
 }
@@ -216,14 +247,6 @@ const closeModal = () => {
 
 const submitForm = async () => {
   formError.value = ''
-  if (!form.value.username.trim()) {
-    formError.value = 'El usuario es requerido'
-    return
-  }
-  if (!editTarget.value && !form.value.password) {
-    formError.value = 'La contraseña es requerida'
-    return
-  }
   saving.value = true
   try {
     if (editTarget.value) {
@@ -234,9 +257,10 @@ const submitForm = async () => {
     closeModal()
     await fetchUsers()
   } catch (err) {
-    const status = err.response?.status
     const msg = err.response?.data?.error?.message
-    formError.value = status === 409 ? 'Ese nombre de usuario ya existe' : msg || 'Error al guardar'
+    formError.value = err.response?.status === 409
+      ? 'Ese email ya está en uso'
+      : msg || 'Error al guardar'
   } finally {
     saving.value = false
   }
@@ -258,8 +282,6 @@ const doDelete = async () => {
     deleting.value = false
   }
 }
-
-const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
 
 onMounted(fetchUsers)
 </script>

@@ -39,7 +39,7 @@
                 {{ userInitial }}
               </div>
               <div class="hidden leading-tight sm:block">
-                <p class="text-sm font-medium text-[#193B68]">{{ authStore.user?.username }}</p>
+                <p class="text-sm font-medium text-[#193B68]">{{ authStore.user?.full_name }}</p>
                 <p class="text-xs text-[var(--color-text-muted)]">{{ authStore.user?.role === 'admin' ? 'Administrador' : 'Colaborador' }}</p>
               </div>
             </div>
@@ -71,7 +71,7 @@ const router = useRouter()
 const authStore = useAuthStore()
 const isSidebarOpen = ref(false)
 
-const userInitial = computed(() => authStore.user?.username?.[0]?.toUpperCase() ?? '?')
+const userInitial = computed(() => authStore.user?.full_name?.[0]?.toUpperCase() ?? '?')
 
 const handleLogout = async () => {
   await authStore.logout()

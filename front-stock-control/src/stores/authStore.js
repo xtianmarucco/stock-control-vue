@@ -20,10 +20,10 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
-    async login(username, password) {
+    async login(email, password) {
       this.loading = true
       try {
-        this.user = await apiLogin(username, password)
+        this.user = await apiLogin(email, password)
       } finally {
         this.loading = false
       }

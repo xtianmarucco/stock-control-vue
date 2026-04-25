@@ -3,9 +3,10 @@ const { handleError } = require('../utils/handleError')
 
 const login = async (req, res) => {
   try {
-    const user = await authService.login(req.body.username, req.body.password)
+    const user = await authService.login(req.body.email, req.body.password)
     req.session.userId = user.id
-    req.session.username = user.username
+    req.session.email = user.email
+    req.session.fullName = user.full_name
     req.session.role = user.role
     res.json({ success: true, data: user })
   } catch (err) {
@@ -22,7 +23,15 @@ const logout = (req, res) => {
 }
 
 const me = (req, res) => {
-  res.json({ success: true, data: { id: req.session.userId, username: req.session.username, role: req.session.role } })
+  res.json({
+    success: true,
+    data: {
+      id: req.session.userId,
+      email: req.session.email,
+      full_name: req.session.fullName,
+      role: req.session.role
+    }
+  })
 }
 
 module.exports = { login, logout, me }
