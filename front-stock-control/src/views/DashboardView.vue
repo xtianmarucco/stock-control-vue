@@ -1,41 +1,185 @@
 <template>
   <DashboardLayout>
-    <section
-      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-[var(--spacing-grid-gap)] mb-[var(--spacing-grid-gap)]"
-    >
-      <DashboardCard
-        title="Sucursal A"
-        :value="350"
-        description="Unidades en stock"
-      />
-      <DashboardCard
-        title="Sucursal B"
-        :value="500"
-        description="Unidades en stock"
-      />
-    </section>
+    <div class="space-y-5">
 
-    <section
-      class="grid grid-cols-1 md:grid-cols-2 gap-[var(--spacing-grid-gap)]"
-    >
-      <BranchStockDonut :branch-id="1" branch-name="Castelli" />
-      <BranchStockDonut :branch-id="2" branch-name="Diagonal" />
+      <!-- KPI Cards -->
+      <section class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+            <i class="i-lucide-package text-xl text-[#1479FF]"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock total</p>
+            <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.total_stock }}</p>
+            <p class="text-xs text-gray-400">unidades en sistema</p>
+          </div>
+        </div>
 
-      <div
-        class="bg-[var(--color-card)] rounded-[var(--radius-lg)] shadow-[var(--shadow-card)] p-[var(--spacing-card)]"
-      >
-        <h2 class="text-xl font-semibold">Panel extra</h2>
-        <p class="text-sm text-[var(--color-text-muted)]">
-          Aquí podrías mostrar notificaciones, actividad reciente o cualquier
-          otro resumen.
-        </p>
-      </div>
-    </section>
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-orange-50 flex items-center justify-center shrink-0">
+            <i class="i-lucide-alert-triangle text-xl text-orange-500"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock bajo</p>
+            <p class="text-2xl font-bold text-orange-500">{{ loading ? '—' : summary.low_stock_count }}</p>
+            <p class="text-xs text-gray-400">productos ≤ 3 unidades</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-purple-50 flex items-center justify-center shrink-0">
+            <i class="i-lucide-arrow-left-right text-xl text-purple-500"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Movimientos</p>
+            <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.movements_last_7_days }}</p>
+            <p class="text-xs text-gray-400">últimos 7 días</p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4">
+          <div class="w-11 h-11 rounded-xl bg-green-50 flex items-center justify-center shrink-0">
+            <i class="i-lucide-store text-xl text-green-500"></i>
+          </div>
+          <div>
+            <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sucursales</p>
+            <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.active_branches_count }}</p>
+            <p class="text-xs text-gray-400">activas</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Donuts por sucursal -->
+      <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <BranchStockDonut
+          v-for="branch in branches"
+          :key="branch.id"
+          :branch-id="branch.id"
+          :branch-name="branch.name"
+        />
+      </section>
+
+      <!-- Stock por categoría (tabs + bar chart) -->
+      <StockCategoryChart :categories="categories" :branches="branches" />
+
+      <!-- Movimientos recientes + Stock bajo -->
+      <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+        <!-- Movimientos recientes -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100">
+            <h2 class="text-sm font-bold text-[#193B68]">Últimos movimientos</h2>
+          </div>
+          <div v-if="loading" class="px-6 py-8 text-center text-gray-300 text-sm">Cargando...</div>
+          <div v-else-if="recentMovements.length === 0" class="px-6 py-8 text-center text-gray-400 text-sm">Sin movimientos</div>
+          <ul v-else class="divide-y divide-gray-50">
+            <li
+              v-for="mov in recentMovements"
+              :key="mov.id"
+              class="px-6 py-3 flex items-center justify-between gap-3"
+            >
+              <div class="flex items-center gap-3 min-w-0">
+                <span :class="typeBadge(mov.movement_type)">{{ formatType(mov.movement_type) }}</span>
+                <div class="min-w-0">
+                  <p class="text-sm text-[#193B68] truncate">
+                    {{ mov.from_branch_name }}
+                    <span v-if="mov.to_branch_name" class="text-gray-400"> → {{ mov.to_branch_name }}</span>
+                  </p>
+                  <p class="text-xs text-gray-400">{{ mov.created_by || '—' }}</p>
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-xs font-semibold text-[#193B68]">{{ mov.items_count }} prod.</p>
+                <p class="text-xs text-gray-400">{{ formatDate(mov.created_at) }}</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Alertas stock bajo -->
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h2 class="text-sm font-bold text-[#193B68]">Alertas de stock bajo</h2>
+            <span v-if="lowStockProducts.length > 0" class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-600">
+              {{ lowStockProducts.length }}
+            </span>
+          </div>
+          <div v-if="loading" class="px-6 py-8 text-center text-gray-300 text-sm">Cargando...</div>
+          <div v-else-if="lowStockProducts.length === 0" class="px-6 py-8 text-center text-gray-400 text-sm">Sin alertas</div>
+          <ul v-else class="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+            <li
+              v-for="(p, i) in lowStockProducts"
+              :key="i"
+              class="px-6 py-3 flex items-center justify-between gap-3"
+            >
+              <div class="min-w-0">
+                <p class="text-sm text-[#193B68] font-medium truncate">{{ p.product_name.trim() }}</p>
+                <p class="text-xs text-gray-400">{{ p.branch_name }} · {{ formatCategory(p.category_name) }}</p>
+              </div>
+              <span
+                class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold"
+                :class="p.total === 0 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'"
+              >
+                {{ p.total }} u.
+              </span>
+            </li>
+          </ul>
+        </div>
+
+      </section>
+    </div>
   </DashboardLayout>
 </template>
 
 <script setup>
+import { ref, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
-import DashboardCard from '../components/dashboard-card/DashboardCard.vue'
 import BranchStockDonut from '../components/branch-stock-donut/BranchStockDonut.vue'
+import StockCategoryChart from '../components/stock-category-chart/StockCategoryChart.vue'
+import { getDashboardData } from '../services/DashboardService'
+import { getBranches } from '../services/BranchService'
+
+const loading = ref(true)
+const branches = ref([])
+const summary = ref({ total_stock: 0, low_stock_count: 0, movements_last_7_days: 0, active_branches_count: 0 })
+const recentMovements = ref([])
+const lowStockProducts = ref([])
+const categories = ref([])
+
+const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
+const formatType = (type) => ({ TRANSFER: 'Traslado', ADJUSTMENT: 'Ajuste', INTERNAL: 'Interno' }[type] || type)
+const formatCategory = (cat) => cat?.replace(/^\w+\d+-\s*/, '').trim() || cat
+
+const typeBadge = (type) => {
+  const base = 'shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold'
+  return {
+    TRANSFER: `${base} bg-blue-100 text-blue-700`,
+    ADJUSTMENT: `${base} bg-orange-100 text-orange-700`,
+    INTERNAL: `${base} bg-purple-100 text-purple-700`
+  }[type] ?? `${base} bg-gray-100 text-gray-600`
+}
+
+onMounted(async () => {
+  try {
+    const [data, branchList] = await Promise.all([getDashboardData(), getBranches()])
+    branches.value = branchList
+    summary.value = {
+      total_stock: data.total_stock,
+      low_stock_count: data.low_stock_count,
+      movements_last_7_days: data.movements_last_7_days,
+      active_branches_count: data.active_branches_count
+    }
+    recentMovements.value = data.recent_movements
+    lowStockProducts.value = data.low_stock_products
+    categories.value = data.categories
+  } catch (err) {
+    console.error(err)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
+
+<style scoped>
+@import url('https://unpkg.com/lucide-static@latest/icons.css');
+</style>

@@ -1,129 +1,82 @@
 <template>
-  <div class="p-4 bg-white rounded-lg shadow h-auto">
-    <!-- Título -->
-    <h2 class="text-lg font-semibold mb-2">
-      Stock por categoría - {{ branchName }}
-    </h2>
-
-    <!-- Contenedor del gráfico -->
-    <div
-      class="bg-[var(--color-card)] doughnut-chart h-auto rounded-[var(--radius-lg)] p-[var(--spacing-card)]"
-    >
-      <div class="w-full  mx-0 flex items-center ">
-        <template v-if="loading">
-          <p class="text-gray-500">Cargando datos...</p>
-        </template>
-
-        <template v-else-if="error">
-          <p class="text-red-500 text-center">{{ error }}</p>
-        </template>
-
-        <template v-else>
-          <Doughnut :data="chartData" :options="chartOptions" />
-        </template>
-      </div>
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100">
+      <h2 class="text-sm font-bold text-[#193B68]">{{ branchName }}</h2>
+      <p class="text-xs text-gray-400 mt-0.5">Stock por categoría</p>
+    </div>
+    <div class="p-4 flex items-center justify-center min-h-[220px]">
+      <p v-if="loading" class="text-gray-300 text-sm">Cargando...</p>
+      <p v-else-if="error" class="text-gray-400 text-sm text-center">{{ error }}</p>
+      <Doughnut v-else :data="chartData" :options="chartOptions" class="max-h-52" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { Doughnut } from "vue-chartjs";
-import {
-  Chart as ChartJS,
-  Title,
-  Tooltip,
-  Legend,
-  ArcElement,
-  CategoryScale,
-} from "chart.js";
-import { getStockSummaryByCategory } from "../../services/stockService";
+import { ref, onMounted } from 'vue'
+import { Doughnut } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js'
+import { getStockSummaryByCategory } from '../../services/stockService'
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale);
+ChartJS.register(Title, Tooltip, Legend, ArcElement, CategoryScale)
 
-// Props dinámicas
 const props = defineProps({
   branchId: { type: Number, required: true },
-  branchName: { type: String, required: true },
-});
+  branchName: { type: String, required: true }
+})
 
-// Estado
-const chartData = ref(null);
-const chartOptions = ref({
+const BASE_COLORS = [
+  '#1479FF', '#E63946', '#2A9D8F', '#E9C46A', '#6D597A',
+  '#F4A261', '#457B9D', '#8AB17D', '#B56576', '#A8DADC',
+  '#F1FAEE', '#1D3557'
+]
+
+const formatCategory = (cat) => cat?.replace(/^\w+\d+-\s*/, '').trim() || cat
+
+const chartData = ref(null)
+const chartOptions = {
   responsive: true,
-  maintainAspectRatio: true,
+  maintainAspectRatio: false,
   plugins: {
     legend: {
-      position: "right",
+      position: 'bottom',
       labels: {
-        color: "var(--color-text-base)",
-        font: { family: "Inter" },
-      },
+        font: { family: 'Inter', size: 11 },
+        color: '#193B68',
+        boxWidth: 12,
+        padding: 12
+      }
     },
-  },
-});
-const loading = ref(true);
-const error = ref(null);
-
-// Función para generar colores predecibles (estables)
-function generateColors(count) {
-  const baseColors = [
-    "#E63946",
-    "#F1FAEE",
-    "#A8DADC",
-    "#457B9D",
-    "#1D3557",
-    "#2A9D8F",
-    "#E9C46A",
-    "#F4A261",
-    "#E76F51",
-    "#8AB17D",
-    "#6D597A",
-    "#B56576",
-  ];
-  return baseColors.slice(0, count);
+    tooltip: {
+      callbacks: {
+        label: (ctx) => ` ${ctx.label}: ${ctx.raw} u.`
+      }
+    }
+  }
 }
+const loading = ref(true)
+const error = ref(null)
 
-// Fetch principal
 onMounted(async () => {
   try {
-    const result = await getStockSummaryByCategory(props.branchId);
-
-    if (!result || result.length === 0) {
-      error.value = "No hay datos disponibles.";
-      return;
+    const result = await getStockSummaryByCategory(props.branchId)
+    if (!result?.length) {
+      error.value = 'Sin datos disponibles'
+      return
     }
-
-    const labels = result.map((item) => item.category);
-    const data = result.map((item) => Number(item.total));
-    const colors = generateColors(labels.length);
-
-    chartData.value = JSON.parse(
-      JSON.stringify({
-        labels,
-        datasets: [
-          {
-            label: `Stock por categoría (${props.branchName})`,
-            data,
-            backgroundColor: colors,
-            borderColor: "#fff",
-            borderWidth: 1,
-          },
-        ],
-      })
-    );
-  } catch (err) {
-    console.error("❌ Error al obtener stock:", err);
-    error.value = "Error al cargar datos del servidor.";
+    chartData.value = {
+      labels: result.map(r => formatCategory(r.category)),
+      datasets: [{
+        data: result.map(r => Number(r.total)),
+        backgroundColor: BASE_COLORS.slice(0, result.length),
+        borderColor: '#fff',
+        borderWidth: 2
+      }]
+    }
+  } catch {
+    error.value = 'Error al cargar datos'
   } finally {
-    loading.value = false;
+    loading.value = false
   }
-});
+})
 </script>
-
-<style scoped>
-.doughnut-chart {
-  height: auto;
-  max-height: 500px;
-}
-</style>

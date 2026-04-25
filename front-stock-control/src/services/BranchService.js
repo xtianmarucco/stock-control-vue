@@ -25,3 +25,9 @@ export const updateBranch = async (id, data) => {
 export const deleteBranch = async (id) => {
   await apiClient.delete(`/branches/${id}`)
 }
+
+export const getStockByBranch = async (branchId, category) => {
+  const params = category ? { category } : {}
+  const res = await apiClient.get(`/branches/${branchId}/stock`, { params })
+  return res.data.data.products ?? []
+}
