@@ -25,6 +25,7 @@
       <nav class="flex flex-col gap-1 overflow-y-auto">
         <SidebarItem icon="layout-dashboard" label="Dashboard" to="/dashboard" @navigate="emit('close')" />
         <SidebarItem icon="store" label="Sucursales" to="/branches" @navigate="emit('close')" />
+        <SidebarItem icon="users" label="Usuarios" to="/users" @navigate="emit('close')" />
 
         <SidebarItem
           icon="box"

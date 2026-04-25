@@ -23,6 +23,11 @@ const routes = [
     component: () => import('../views/BranchesView.vue')
   },
   {
+    path: '/users',
+    name: 'UsersView',
+    component: () => import('../views/UsersView.vue')
+  },
+  {
     path: '/branches/:branchId/products',
     component: () => import('../layouts/ProductsLayout.vue'),
     children: [

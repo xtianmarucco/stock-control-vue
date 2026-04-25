@@ -6,6 +6,7 @@ const login = async (req, res) => {
     const user = await authService.login(req.body.username, req.body.password)
     req.session.userId = user.id
     req.session.username = user.username
+    req.session.role = user.role
     res.json({ success: true, data: user })
   } catch (err) {
     handleError(res, err)
@@ -21,7 +22,7 @@ const logout = (req, res) => {
 }
 
 const me = (req, res) => {
-  res.json({ success: true, data: { id: req.session.userId, username: req.session.username } })
+  res.json({ success: true, data: { id: req.session.userId, username: req.session.username, role: req.session.role } })
 }
 
 module.exports = { login, logout, me }

@@ -1,4 +1,5 @@
 const { Router } = require('express');
+const { requireAdmin } = require('../middleware/auth');
 const {
   createStockMovement,
   getStockMovements,
@@ -8,7 +9,7 @@ const {
 const router = Router();
 
 router.get('/', getStockMovements);
-router.post('/', createStockMovement);
-router.get('/:id', getStockMovementById); // <--- Esta es la ruta que faltaba
+router.post('/', requireAdmin, createStockMovement);
+router.get('/:id', getStockMovementById);
 
 module.exports = router;

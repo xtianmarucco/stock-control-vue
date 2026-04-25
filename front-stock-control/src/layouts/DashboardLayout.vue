@@ -40,7 +40,7 @@
               </div>
               <div class="hidden leading-tight sm:block">
                 <p class="text-sm font-medium text-[#193B68]">{{ authStore.user?.username }}</p>
-                <p class="text-xs text-[var(--color-text-muted)]">Administrador</p>
+                <p class="text-xs text-[var(--color-text-muted)]">{{ authStore.user?.role === 'admin' ? 'Administrador' : 'Colaborador' }}</p>
               </div>
             </div>
             <button
@@ -81,6 +81,7 @@ const handleLogout = async () => {
 const pageTitles = {
   Dashboard: 'Dashboard',
   BranchesView: 'Sucursales',
+  UsersView: 'Usuarios',
   BranchProducts: 'Productos',
   StockMovementsView: 'Movimientos de Stock'
 }

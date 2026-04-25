@@ -7,6 +7,7 @@
         <p class="text-sm text-gray-400 mt-0.5">Registros y filtros de movimientos</p>
       </div>
       <button
+        v-if="isAdmin"
         class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-full text-sm transition-colors"
         @click="openMovementModal"
       >
@@ -169,6 +170,10 @@ import MovementDetailModal from '../components/movement-detail-modal/MovementDet
 import { getStockMovements } from '../services/MovementsService.js'
 import { getBranches } from '../services/BranchService.js'
 import StockMovementModal from '../components/StockMovementModal/StockMovementModal.vue'
+import { useAuthStore } from '../stores/authStore'
+
+const authStore = useAuthStore()
+const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const movements = ref([])
 const branches = ref([])

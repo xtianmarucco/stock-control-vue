@@ -12,7 +12,7 @@ const login = async (username, password) => {
   const valid = await bcrypt.compare(password, user.password_hash)
   if (!valid) throw createError('Invalid credentials', 'UNAUTHORIZED', 401)
 
-  return { id: user.id, username: user.username }
+  return { id: user.id, username: user.username, role: user.role }
 }
 
 module.exports = { login }

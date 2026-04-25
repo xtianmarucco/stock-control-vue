@@ -3,15 +3,15 @@
     <div class="space-y-5">
       <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex justify-between items-center">
         <div>
-          <h1 class="text-xl font-bold text-[#193B68]">Sucursales</h1>
-          <p class="text-sm text-gray-400 mt-0.5">Gestión de sucursales del sistema</p>
+          <h1 class="text-xl font-bold text-[#193B68]">Usuarios</h1>
+          <p class="text-sm text-gray-400 mt-0.5">Gestión de usuarios del sistema</p>
         </div>
         <button
           v-if="isAdmin"
           class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-full text-sm transition-colors"
           @click="openCreate"
         >
-          + Nueva sucursal
+          + Nuevo usuario
         </button>
       </div>
 
@@ -19,34 +19,42 @@
         <table class="min-w-full text-sm text-left">
           <thead class="border-b border-gray-100">
             <tr>
-              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Nombre</th>
-              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Dirección</th>
-              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Estado</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Usuario</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Rol</th>
+              <th class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide">Creado</th>
               <th v-if="isAdmin" class="px-6 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right">Acciones</th>
             </tr>
           </thead>
           <tbody>
             <tr
-              v-for="branch in branches"
-              :key="branch.id"
+              v-for="user in users"
+              :key="user.id"
               class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
             >
-              <td class="px-6 py-4 font-medium text-[#193B68]">{{ branch.name }}</td>
-              <td class="px-6 py-4 text-gray-500">{{ branch.address || '—' }}</td>
+              <td class="px-6 py-4 font-medium text-[#193B68]">
+                {{ user.username }}
+                <span v-if="user.id === authStore.user?.id" class="ml-2 text-xs text-gray-400">(vos)</span>
+              </td>
               <td class="px-6 py-4">
                 <span
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold"
-                  :class="branch.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'"
+                  :class="user.role === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-600'"
                 >
-                  {{ branch.is_active ? 'Activa' : 'Inactiva' }}
+                  {{ user.role === 'admin' ? 'Administrador' : 'Colaborador' }}
                 </span>
               </td>
+              <td class="px-6 py-4 text-gray-500">{{ formatDate(user.created_at) }}</td>
               <td v-if="isAdmin" class="px-6 py-4 text-right">
                 <div class="flex justify-end gap-3">
-                  <button @click="openEdit(branch)" class="text-sm text-[#1479FF] hover:underline font-medium">
+                  <button @click="openEdit(user)" class="text-sm text-[#1479FF] hover:underline font-medium">
                     Editar
                   </button>
-                  <button @click="confirmDelete(branch)" class="text-sm text-red-500 hover:underline font-medium">
+                  <button
+                    @click="confirmDelete(user)"
+                    :disabled="user.id === authStore.user?.id"
+                    class="text-sm font-medium"
+                    :class="user.id === authStore.user?.id ? 'text-gray-300 cursor-not-allowed' : 'text-red-500 hover:underline'"
+                  >
                     Eliminar
                   </button>
                 </div>
@@ -56,8 +64,8 @@
         </table>
 
         <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">Cargando...</div>
-        <div v-if="!loading && branches.length === 0" class="text-center py-10 text-gray-400 text-sm">
-          No hay sucursales registradas
+        <div v-if="!loading && users.length === 0" class="text-center py-10 text-gray-400 text-sm">
+          No hay usuarios registrados
         </div>
       </div>
     </div>
@@ -66,31 +74,47 @@
       <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 space-y-5">
           <h2 class="text-lg font-bold text-[#193B68]">
-            {{ editTarget ? 'Editar sucursal' : 'Nueva sucursal' }}
+            {{ editTarget ? 'Editar usuario' : 'Nuevo usuario' }}
           </h2>
 
           <div class="space-y-4">
             <div class="flex flex-col gap-1.5">
               <label class="text-sm font-semibold text-[#193B68]">
-                Nombre <span class="text-red-500">*</span>
+                Usuario <span class="text-red-500">*</span>
               </label>
               <input
-                v-model="form.name"
+                v-model="form.username"
                 type="text"
-                placeholder="Ej: Castelli"
+                placeholder="Ej: juan.perez"
                 class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
               />
-              <p v-if="formError" class="text-xs text-red-500">{{ formError }}</p>
             </div>
+
             <div class="flex flex-col gap-1.5">
-              <label class="text-sm font-semibold text-[#193B68]">Dirección</label>
+              <label class="text-sm font-semibold text-[#193B68]">
+                Contraseña <span v-if="!editTarget" class="text-red-500">*</span>
+                <span v-else class="text-gray-400 font-normal">(dejar vacío para no cambiar)</span>
+              </label>
               <input
-                v-model="form.address"
-                type="text"
-                placeholder="Ej: Av. Castelli 1234"
+                v-model="form.password"
+                type="password"
+                placeholder="••••••••"
                 class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
               />
             </div>
+
+            <div class="flex flex-col gap-1.5">
+              <label class="text-sm font-semibold text-[#193B68]">Rol <span class="text-red-500">*</span></label>
+              <select
+                v-model="form.role"
+                class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
+              >
+                <option value="colaborador">Colaborador</option>
+                <option value="admin">Administrador</option>
+              </select>
+            </div>
+
+            <p v-if="formError" class="text-xs text-red-500">{{ formError }}</p>
           </div>
 
           <div class="flex justify-end gap-3 pt-2">
@@ -105,7 +129,7 @@
               :disabled="saving"
               class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-xl text-sm transition-colors disabled:opacity-50"
             >
-              {{ saving ? 'Guardando...' : (editTarget ? 'Guardar cambios' : 'Crear sucursal') }}
+              {{ saving ? 'Guardando...' : (editTarget ? 'Guardar cambios' : 'Crear usuario') }}
             </button>
           </div>
         </div>
@@ -115,10 +139,9 @@
     <Teleport to="body">
       <div v-if="deleteTarget" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4">
         <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-          <h2 class="text-lg font-bold text-[#193B68]">Eliminar sucursal</h2>
+          <h2 class="text-lg font-bold text-[#193B68]">Eliminar usuario</h2>
           <p class="text-sm text-gray-500">
-            ¿Estás seguro de eliminar <strong class="text-[#193B68]">{{ deleteTarget.name }}</strong>?
-            Esta acción eliminará también todo su stock y movimientos asociados.
+            ¿Estás seguro de eliminar al usuario <strong class="text-[#193B68]">{{ deleteTarget.username }}</strong>?
             <span class="font-semibold text-red-600">No se puede deshacer.</span>
           </p>
           <div class="flex justify-end gap-3 pt-1">
@@ -146,12 +169,12 @@
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { useAuthStore } from '../stores/authStore'
-import { getBranches, createBranch, updateBranch, deleteBranch } from '../services/BranchService.js'
+import { getUsers, createUser, updateUser, deleteUser } from '../services/UsersService.js'
 
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
-const branches = ref([])
+const users = ref([])
 const loading = ref(false)
 const showModal = ref(false)
 const editTarget = ref(null)
@@ -159,12 +182,12 @@ const deleteTarget = ref(null)
 const saving = ref(false)
 const deleting = ref(false)
 const formError = ref('')
-const form = ref({ name: '', address: '' })
+const form = ref({ username: '', password: '', role: 'colaborador' })
 
-const fetchBranches = async () => {
+const fetchUsers = async () => {
   loading.value = true
   try {
-    branches.value = await getBranches()
+    users.value = await getUsers()
   } catch (err) {
     console.error(err)
   } finally {
@@ -174,14 +197,14 @@ const fetchBranches = async () => {
 
 const openCreate = () => {
   editTarget.value = null
-  form.value = { name: '', address: '' }
+  form.value = { username: '', password: '', role: 'colaborador' }
   formError.value = ''
   showModal.value = true
 }
 
-const openEdit = (branch) => {
-  editTarget.value = branch
-  form.value = { name: branch.name, address: branch.address || '' }
+const openEdit = (user) => {
+  editTarget.value = user
+  form.value = { username: user.username, password: '', role: user.role }
   formError.value = ''
   showModal.value = true
 }
@@ -193,39 +216,42 @@ const closeModal = () => {
 
 const submitForm = async () => {
   formError.value = ''
-  if (!form.value.name.trim()) {
-    formError.value = 'El nombre es requerido'
+  if (!form.value.username.trim()) {
+    formError.value = 'El usuario es requerido'
+    return
+  }
+  if (!editTarget.value && !form.value.password) {
+    formError.value = 'La contraseña es requerida'
     return
   }
   saving.value = true
   try {
     if (editTarget.value) {
-      await updateBranch(editTarget.value.id, form.value)
+      await updateUser(editTarget.value.id, form.value)
     } else {
-      await createBranch(form.value)
+      await createUser(form.value)
     }
     closeModal()
-    await fetchBranches()
+    await fetchUsers()
   } catch (err) {
+    const status = err.response?.status
     const msg = err.response?.data?.error?.message
-    formError.value = err.response?.status === 409
-      ? 'Ya existe una sucursal con ese nombre'
-      : msg || 'Error al guardar'
+    formError.value = status === 409 ? 'Ese nombre de usuario ya existe' : msg || 'Error al guardar'
   } finally {
     saving.value = false
   }
 }
 
-const confirmDelete = (branch) => {
-  deleteTarget.value = branch
+const confirmDelete = (user) => {
+  deleteTarget.value = user
 }
 
 const doDelete = async () => {
   deleting.value = true
   try {
-    await deleteBranch(deleteTarget.value.id)
+    await deleteUser(deleteTarget.value.id)
     deleteTarget.value = null
-    await fetchBranches()
+    await fetchUsers()
   } catch (err) {
     console.error(err)
   } finally {
@@ -233,5 +259,7 @@ const doDelete = async () => {
   }
 }
 
-onMounted(fetchBranches)
+const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
+
+onMounted(fetchUsers)
 </script>
