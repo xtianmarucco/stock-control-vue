@@ -123,6 +123,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { createStockMovement } from '../../services/MovementsService.js'
 import { getStockByBranch } from '../../services/ProductService.js'
 import { getReasonCategories } from '../../services/ReasonCategoriesService.js'
+import { useToastStore } from '../../stores/toastStore'
 import MovementTypeStep from './MovementTypeStep.vue'
 import MovementItemsStep from './MovementItemsStep.vue'
 import MovementReviewStep from './MovementReviewStep.vue'
@@ -133,6 +134,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['close', 'saved'])
+const toast = useToastStore()
 
 const stepsLabels = ['Tipo y sucursal', 'Productos', 'Revisión']
 const currentStep = ref(0)
@@ -286,10 +288,12 @@ const submit = async () => {
     }
 
     await createStockMovement(payload)
+    toast.add('Movimiento registrado correctamente')
     emit('saved')
     emit('close')
   } catch (err) {
     formMessage.value = err.response?.data?.error?.message || 'No se pudo guardar el movimiento.'
+    toast.add(formMessage.value, 'error')
   } finally {
     submitting.value = false
   }

@@ -198,9 +198,11 @@
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { useAuthStore } from '../stores/authStore'
+import { useToastStore } from '../stores/toastStore'
 import { getUsers, createUser, updateUser, deleteUser } from '../services/UsersService.js'
 
 const authStore = useAuthStore()
+const toast = useToastStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const users = ref([])
@@ -251,8 +253,10 @@ const submitForm = async () => {
   try {
     if (editTarget.value) {
       await updateUser(editTarget.value.id, form.value)
+      toast.add('Usuario actualizado correctamente')
     } else {
       await createUser(form.value)
+      toast.add('Usuario creado correctamente')
     }
     closeModal()
     await fetchUsers()
@@ -276,8 +280,10 @@ const doDelete = async () => {
     await deleteUser(deleteTarget.value.id)
     deleteTarget.value = null
     await fetchUsers()
+    toast.add('Usuario eliminado correctamente')
   } catch (err) {
-    console.error(err)
+    deleteTarget.value = null
+    toast.add('No se pudo eliminar el usuario', 'error')
   } finally {
     deleting.value = false
   }

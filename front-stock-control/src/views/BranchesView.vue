@@ -146,9 +146,11 @@
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { useAuthStore } from '../stores/authStore'
+import { useToastStore } from '../stores/toastStore'
 import { getBranches, createBranch, updateBranch, deleteBranch } from '../services/BranchService.js'
 
 const authStore = useAuthStore()
+const toast = useToastStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
 const branches = ref([])
@@ -201,8 +203,10 @@ const submitForm = async () => {
   try {
     if (editTarget.value) {
       await updateBranch(editTarget.value.id, form.value)
+      toast.add('Sucursal actualizada correctamente')
     } else {
       await createBranch(form.value)
+      toast.add('Sucursal creada correctamente')
     }
     closeModal()
     await fetchBranches()
@@ -226,8 +230,10 @@ const doDelete = async () => {
     await deleteBranch(deleteTarget.value.id)
     deleteTarget.value = null
     await fetchBranches()
+    toast.add('Sucursal eliminada correctamente')
   } catch (err) {
-    console.error(err)
+    deleteTarget.value = null
+    toast.add('No se pudo eliminar la sucursal', 'error')
   } finally {
     deleting.value = false
   }
