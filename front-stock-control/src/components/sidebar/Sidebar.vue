@@ -51,7 +51,7 @@
         </SidebarItem>
 
         <SidebarItem icon="arrow-left-right" label="Movimientos" to="/movements" @navigate="emit('close')" />
-        <SidebarItem icon="bar-chart-3" label="Reportes" />
+        <SidebarItem icon="bar-chart-3" label="Reportes" to="/reports" @navigate="emit('close')" />
       </nav>
     </div>
   </aside>
