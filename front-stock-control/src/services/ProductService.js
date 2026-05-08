@@ -5,3 +5,8 @@ export const getStockByBranch = async (branchId, category = null) => {
   const res = await apiClient.get(`/branches/${branchId}/stock`, { params })
   return res.data.data
 }
+
+export const getProductById = async (id) => {
+  const res = await apiClient.get(`/products/${id}`)
+  return res.data.data
+}

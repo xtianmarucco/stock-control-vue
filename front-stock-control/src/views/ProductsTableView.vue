@@ -1,4 +1,6 @@
 <template>
+  <ProductDrawer v-model="drawerOpen" :preview="selectedProduct" />
+
   <div class="space-y-6">
     <section class="rounded-[32px] border border-[var(--color-border)] bg-white px-6 py-6 shadow-[0_24px_50px_rgba(15,35,64,0.08)] sm:px-8">
       <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
@@ -135,7 +137,8 @@
               <article
                 v-for="prod in paginatedProducts"
                 :key="prod.id"
-                class="grid gap-3 px-5 py-4 transition hover:bg-[#FAFCFF] md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_120px] md:items-center"
+                class="grid cursor-pointer gap-3 px-5 py-4 transition hover:bg-[#F0F6FF] md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_120px] md:items-center"
+                @click="openDrawer(prod)"
               >
                 <div class="min-w-0">
                   <p class="text-base font-semibold leading-snug text-[var(--color-text-base)] md:max-w-[28rem]">
@@ -209,10 +212,19 @@ import { useRoute } from 'vue-router'
 import { getStockByBranch } from '../services/ProductService.js'
 import { getStockSummaryByCategory } from '../services/stockService.js'
 import { getBranchById } from '../services/BranchService.js'
+import ProductDrawer from '../components/product-drawer/ProductDrawer.vue'
 
 const route = useRoute()
 
 const branchId = computed(() => Number(route.params.branchId))
+
+const drawerOpen = ref(false)
+const selectedProduct = ref(null)
+
+const openDrawer = (prod) => {
+  selectedProduct.value = prod
+  drawerOpen.value = true
+}
 
 const branchName = ref('')
 const products = ref([])
