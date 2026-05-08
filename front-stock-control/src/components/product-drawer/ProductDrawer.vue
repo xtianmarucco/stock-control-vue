@@ -67,7 +67,7 @@
                 {{ preview?.total ?? '—' }}
               </span>
               <div>
-                <p class="text-sm font-semibold text-[var(--color-text-base)]">bultos</p>
+                <p class="text-sm font-semibold text-[var(--color-text-base)]">unidades</p>
                 <span
                   class="mt-0.5 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
                   :class="preview?.low_stock ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#DCFCE7] text-[#16A34A]'"
@@ -221,21 +221,15 @@ const formatDecimal = (val) => {
 const stockBreakdown = computed(() => {
   if (!product.value || props.preview?.total == null) return []
   const p = product.value
-  const bultos = props.preview.total
+  const unidades = props.preview.total
   const items = []
 
-  if (p.cajas_x_pack) {
-    items.push({ label: 'Equivale en cajas', value: bultos * p.cajas_x_pack, unit: 'cajas' })
+  if (p.unidades_x_pack) {
+    items.push({ label: 'Equivale en bultos', value: Math.floor(unidades / p.unidades_x_pack), unit: 'bultos' })
   }
 
-  const unidades = p.unidades_x_pack
-    ? bultos * p.unidades_x_pack
-    : p.cajas_x_pack && p.unidades_x_caja
-      ? bultos * p.cajas_x_pack * p.unidades_x_caja
-      : null
-
-  if (unidades !== null) {
-    items.push({ label: 'Equivale en unidades', value: unidades, unit: 'unidades' })
+  if (p.unidades_x_caja) {
+    items.push({ label: 'Equivale en cajas', value: Math.floor(unidades / p.unidades_x_caja), unit: 'cajas' })
   }
 
   return items
@@ -245,9 +239,9 @@ const conversionRatios = computed(() => {
   if (!product.value) return []
   const p = product.value
   const items = []
-  if (p.cajas_x_pack) items.push(`1 bulto = ${p.cajas_x_pack} cajas`)
+  if (p.unidades_x_pack) items.push(`1 bulto = ${p.unidades_x_pack} unidades`)
   if (p.unidades_x_caja) items.push(`1 caja = ${p.unidades_x_caja} unidades`)
-  if (!p.cajas_x_pack && p.unidades_x_pack) items.push(`1 bulto = ${p.unidades_x_pack} unidades`)
+  if (p.cajas_x_pack) items.push(`1 bulto = ${p.cajas_x_pack} cajas`)
   return items
 })
 

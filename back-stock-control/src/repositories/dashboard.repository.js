@@ -2,8 +2,17 @@ const prisma = require('../lib/prisma')
 
 const getSummary = async () => {
   const [totalStock, lowStockCount, branchCount, movementsCount] = await Promise.all([
-    prisma.$queryRaw`SELECT COALESCE(SUM(total), 0) AS total FROM branch_stock`,
-    prisma.$queryRaw`SELECT COUNT(*) AS count FROM branch_stock WHERE total <= 3`,
+    prisma.$queryRaw`
+      SELECT COALESCE(SUM(FLOOR(bs.total::float / COALESCE(p.unidades_x_pack, 1))), 0) AS total
+      FROM branch_stock bs
+      JOIN products p ON bs.product_id = p.id
+    `,
+    prisma.$queryRaw`
+      SELECT COUNT(*) AS count
+      FROM branch_stock bs
+      JOIN products p ON bs.product_id = p.id
+      WHERE bs.total <= 3 * COALESCE(p.unidades_x_pack, 1)
+    `,
     prisma.$queryRaw`SELECT COUNT(*) AS count FROM branches WHERE is_active = true`,
     prisma.$queryRaw`
       SELECT COUNT(*) AS count FROM stock_movements
@@ -45,11 +54,11 @@ const getLowStockProducts = () =>
       p.name AS product_name,
       p.category_name,
       b.name AS branch_name,
-      bs.total
+      FLOOR(bs.total::float / COALESCE(p.unidades_x_pack, 1)) AS total_packs
     FROM branch_stock bs
     JOIN products p ON bs.product_id = p.id
     JOIN branches b ON bs.branch_id = b.id
-    WHERE bs.total <= 3
+    WHERE bs.total <= 3 * COALESCE(p.unidades_x_pack, 1)
     ORDER BY bs.total ASC, p.name ASC
     LIMIT 20
   `

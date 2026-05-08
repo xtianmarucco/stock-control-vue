@@ -73,7 +73,7 @@ const chartOptions = {
     },
     tooltip: {
       callbacks: {
-        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw} u.`
+        label: (ctx) => ` ${ctx.dataset.label}: ${ctx.raw} bultos`
       }
     }
   },
@@ -111,7 +111,7 @@ const loadChartData = async (category) => {
         if (!productMap.has(p.id)) {
           productMap.set(p.id, { name: p.name.trim(), stocks: new Array(props.branches.length).fill(0) })
         }
-        productMap.get(p.id).stocks[i] = p.stock_total
+        productMap.get(p.id).stocks[i] = p.pack_total
       })
     })
 

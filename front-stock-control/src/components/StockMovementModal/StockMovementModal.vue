@@ -190,6 +190,18 @@ const validateStep1 = () => {
   return true
 }
 
+const toUnidades = (item) => {
+  const q = item.quantity_input
+  if (!q || q <= 0) return null
+  const unit = item.quantity_unit ?? 'UNIDAD'
+  if (unit === 'UNIDAD') return q
+  if (unit === 'CAJA') return item.unidades_x_caja ? q * item.unidades_x_caja : null
+  if (unit === 'BULTO') return item.unidades_x_pack ? q * item.unidades_x_pack : null
+  return null
+}
+
+const unitLabel = (unit) => ({ BULTO: 'bultos', CAJA: 'cajas', UNIDAD: 'unidades' }[unit] ?? 'unidades')
+
 const validateStep2 = () => {
   formMessage.value = ''
 
@@ -208,8 +220,16 @@ const validateStep2 = () => {
       return false
     }
 
-    if (draft.movement_type === 'TRANSFER' && item.quantity_input > item.available_stock) {
-      formMessage.value = `Stock insuficiente para "${item.product_name}". Disponible: ${item.available_stock}, solicitado: ${item.quantity_input}.`
+    const unidades = toUnidades(item)
+    if (unidades === null) {
+      formMessage.value = `No se pudo convertir la cantidad de "${item.product_name}" a unidades. Verificá los datos del producto.`
+      return false
+    }
+
+    if (draft.movement_type === 'TRANSFER' && unidades > item.available_stock) {
+      const disponible = item.available_stock
+      const solicitado = unidades
+      formMessage.value = `Stock insuficiente para "${item.product_name}". Disponible: ${disponible} unidades, solicitado: ${solicitado} unidades (${item.quantity_input} ${unitLabel(item.quantity_unit)}).`
       return false
     }
   }
@@ -283,7 +303,7 @@ const submit = async () => {
       reason: draft.reason,
       items: draft.items.map(item => ({
         product_id: item.product_id,
-        quantity: transformQuantity(item.quantity_input, draft.movement_type)
+        quantity: transformQuantity(toUnidades(item), draft.movement_type)
       }))
     }
 

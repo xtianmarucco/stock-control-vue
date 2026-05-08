@@ -11,7 +11,7 @@
           <div>
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock total</p>
             <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.total_stock }}</p>
-            <p class="text-xs text-gray-400">unidades en sistema</p>
+            <p class="text-xs text-gray-400">bultos en sistema</p>
           </div>
         </div>
 
@@ -22,7 +22,7 @@
           <div>
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock bajo</p>
             <p class="text-2xl font-bold text-orange-500">{{ loading ? '—' : summary.low_stock_count }}</p>
-            <p class="text-xs text-gray-400">productos ≤ 3 unidades</p>
+            <p class="text-xs text-gray-400">productos con stock bajo</p>
           </div>
         </div>
 
@@ -120,7 +120,7 @@
                 class="shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold"
                 :class="p.total === 0 ? 'bg-red-100 text-red-600' : 'bg-orange-100 text-orange-600'"
               >
-                {{ p.total }} u.
+                {{ p.total }} bultos
               </span>
             </li>
           </ul>

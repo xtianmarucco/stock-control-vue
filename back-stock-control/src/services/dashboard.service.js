@@ -23,7 +23,7 @@ const getDashboardData = async () => {
       product_name: p.product_name,
       category_name: p.category_name,
       branch_name: p.branch_name,
-      total: Number(p.total)
+      total: Number(p.total_packs)
     })),
     categories: categoriesRows.map(r => r.category_name)
   }

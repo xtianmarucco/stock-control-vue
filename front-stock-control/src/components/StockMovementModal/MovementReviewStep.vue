@@ -55,8 +55,17 @@
               class="border-b border-[var(--color-border)] last:border-b-0"
             >
               <td class="px-4 py-3 text-[var(--color-text-base)]">{{ item.product_name }}</td>
-              <td class="px-4 py-3 text-center text-[var(--color-text-muted)]">{{ item.available_stock ?? '-' }}</td>
-              <td class="px-4 py-3 text-center font-semibold text-[var(--color-text-base)]">{{ signedQuantity(item.quantity_input) }}</td>
+              <td class="px-4 py-3 text-center text-[var(--color-text-muted)]">
+                {{ item.available_stock ?? '-' }} u.
+              </td>
+              <td class="px-4 py-3 text-center">
+                <p class="font-semibold text-[var(--color-text-base)]">
+                  {{ signedQuantity(item.quantity_input, item.quantity_unit) }}
+                </p>
+                <p v-if="item.quantity_unit !== 'UNIDAD'" class="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                  = {{ signedUnidades(item) }} u.
+                </p>
+              </td>
               <td class="px-4 py-3 text-center">
                 <span :class="resultBadgeClass">{{ resultLabel }}</span>
               </td>
@@ -109,9 +118,27 @@ const toBranchName = computed(() => {
 //
 // Cantidad con signo
 //
-const signedQuantity = (q) => {
-  if (props.draft.movement_type === 'ADJUSTMENT') return `-${Math.abs(q)}`
-  return `+${Math.abs(q)}`
+const unitLabel = (unit) => ({ BULTO: 'bulto(s)', CAJA: 'caja(s)', UNIDAD: 'unidad(es)' }[unit] ?? 'u.')
+
+const toUnidades = (item) => {
+  const q = item.quantity_input
+  if (!q) return 0
+  const unit = item.quantity_unit ?? 'UNIDAD'
+  if (unit === 'UNIDAD') return q
+  if (unit === 'CAJA') return item.unidades_x_caja ? q * item.unidades_x_caja : q
+  if (unit === 'BULTO') return item.unidades_x_pack ? q * item.unidades_x_pack : q
+  return q
+}
+
+const signedQuantity = (q, unit) => {
+  const sign = props.draft.movement_type === 'ADJUSTMENT' ? '-' : '+'
+  return `${sign}${Math.abs(q)} ${unitLabel(unit)}`
+}
+
+const signedUnidades = (item) => {
+  const u = toUnidades(item)
+  const sign = props.draft.movement_type === 'ADJUSTMENT' ? '-' : '+'
+  return `${sign}${Math.abs(u)}`
 }
 
 //

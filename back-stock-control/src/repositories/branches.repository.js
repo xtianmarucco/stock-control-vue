@@ -8,7 +8,9 @@ const findById = (id) =>
 
 const findStockSummaryByCategory = async (branchId) => {
   const rows = await prisma.$queryRaw`
-    SELECT p.category_name AS category, SUM(bs.total) AS total
+    SELECT
+      p.category_name AS category,
+      SUM(FLOOR(bs.total::float / COALESCE(p.unidades_x_pack, 1))) AS total
     FROM branch_stock bs
     JOIN products p ON bs.product_id = p.id
     WHERE bs.branch_id = ${branchId}
@@ -21,26 +23,38 @@ const findStockSummaryByCategory = async (branchId) => {
 const findStockByBranch = async (branchId, category) => {
   const rows = category
     ? await prisma.$queryRaw`
-        SELECT p.id, p.name, p.category_name, bs.total AS stock_total
+        SELECT p.id, p.name, p.category_name,
+               p.cajas_x_pack, p.unidades_x_caja, p.unidades_x_pack,
+               bs.total AS stock_total
         FROM branch_stock bs
         JOIN products p ON bs.product_id = p.id
         WHERE bs.branch_id = ${branchId} AND p.category_name = ${category}
         ORDER BY p.category_name, p.name
       `
     : await prisma.$queryRaw`
-        SELECT p.id, p.name, p.category_name, bs.total AS stock_total
+        SELECT p.id, p.name, p.category_name,
+               p.cajas_x_pack, p.unidades_x_caja, p.unidades_x_pack,
+               bs.total AS stock_total
         FROM branch_stock bs
         JOIN products p ON bs.product_id = p.id
         WHERE bs.branch_id = ${branchId}
         ORDER BY p.category_name, p.name
       `
 
-  return rows.map(r => ({
-    id: Number(r.id),
-    name: r.name,
-    category_name: r.category_name,
-    stock_total: Number(r.stock_total)
-  }))
+  return rows.map(r => {
+    const unidades_x_pack = r.unidades_x_pack != null ? Number(r.unidades_x_pack) : null
+    const stock_total = Number(r.stock_total)
+    return {
+      id: Number(r.id),
+      name: r.name,
+      category_name: r.category_name,
+      cajas_x_pack: r.cajas_x_pack != null ? Number(r.cajas_x_pack) : null,
+      unidades_x_caja: r.unidades_x_caja != null ? Number(r.unidades_x_caja) : null,
+      unidades_x_pack,
+      stock_total,
+      pack_total: unidades_x_pack ? Math.floor(stock_total / unidades_x_pack) : stock_total
+    }
+  })
 }
 
 const create = (data) =>

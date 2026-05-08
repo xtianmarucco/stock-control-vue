@@ -49,7 +49,7 @@ const chartOptions = {
     },
     tooltip: {
       callbacks: {
-        label: (ctx) => ` ${ctx.label}: ${ctx.raw} u.`
+        label: (ctx) => ` ${ctx.label}: ${ctx.raw} bultos`
       }
     }
   }

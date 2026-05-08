@@ -127,7 +127,7 @@
               </label>
             </div>
 
-            <div class="hidden grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_120px] border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:grid">
+            <div class="hidden grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_160px] border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:grid">
               <span>Producto</span>
               <span>Categoría</span>
               <span class="text-right">Stock total</span>
@@ -137,7 +137,7 @@
               <article
                 v-for="prod in paginatedProducts"
                 :key="prod.id"
-                class="grid cursor-pointer gap-3 px-5 py-4 transition hover:bg-[#F0F6FF] md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_120px] md:items-center"
+                class="grid cursor-pointer gap-3 px-5 py-4 transition hover:bg-[#F0F6FF] md:grid-cols-[minmax(0,1.6fr)_minmax(180px,0.8fr)_160px] md:items-center"
                 @click="openDrawer(prod)"
               >
                 <div class="min-w-0">
@@ -153,15 +153,19 @@
                   </span>
                 </div>
 
-                <div class="flex items-center justify-between md:justify-end">
+                <div class="flex items-center justify-between md:flex-col md:items-end md:gap-1">
                   <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:hidden">Stock</span>
                   <span
-                    class="inline-flex min-w-[74px] items-center justify-center rounded-full px-3 py-1.5 text-sm font-semibold"
-                    :class="prod.low_stock
-                      ? 'bg-[#FEE2E2] text-[#DC2626]'
-                      : 'bg-[#DCFCE7] text-[#16A34A]'"
+                    class="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-sm font-semibold"
+                    :class="prod.low_stock ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#DCFCE7] text-[#16A34A]'"
                   >
-                    {{ prod.total }}
+                    {{ prod.pack_total ?? prod.total }} bultos
+                  </span>
+                  <span
+                    v-if="prod.unidades_x_caja && prod.total"
+                    class="text-xs text-[var(--color-text-muted)]"
+                  >
+                    = {{ Math.floor(prod.total / prod.unidades_x_caja) }} cajas
                   </span>
                 </div>
               </article>
@@ -250,8 +254,8 @@ const paginatedProducts = computed(() => {
 })
 
 const lowStockCount = computed(() => products.value.filter(product => product.low_stock).length)
-const totalUnits = computed(() => products.value.reduce((acc, product) => acc + (product.total || 0), 0))
-const stockSummaryText = computed(() => `${products.value.length} productos • ${totalUnits.value} unidades`)
+const totalPacks = computed(() => products.value.reduce((acc, p) => acc + (p.pack_total ?? p.total ?? 0), 0))
+const stockSummaryText = computed(() => `${products.value.length} productos • ${totalPacks.value} bultos`)
 const paginationLabel = computed(() => {
   if (!filteredProducts.value.length) return '0 resultados'
 

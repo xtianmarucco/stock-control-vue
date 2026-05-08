@@ -22,7 +22,7 @@ const getStockByBranch = async (branchId, category) => {
     products: products.map(p => ({
       ...p,
       total: p.stock_total,
-      low_stock: p.stock_total <= 3
+      low_stock: p.stock_total <= 3 * (p.unidades_x_pack ?? 1)
     }))
   }
 }
