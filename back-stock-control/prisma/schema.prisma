@@ -1,5 +1,6 @@
 generator client {
   provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -10,9 +11,10 @@ model branch_stock {
   id         Int       @id(map: "stock_pkey") @default(autoincrement())
   product_id Int?
   branch_id  Int?
-  total      Int?
+  total      Int       @default(0)
   updated_at DateTime? @default(now()) @db.Timestamp(6)
   branch     branches? @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stock_branch_id_fkey")
+  product    products? @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([product_id, branch_id], map: "stock_product_id_branch_id_key")
 }
@@ -29,30 +31,21 @@ model branches {
 }
 
 model products {
-  id                 Int                    @id
-  sku                String?
-  name               String
-  summary            String?
-  category_id        Int?
-  category_name      String?
-  brand_name         String?
-  supplier_name      String?
-  distributor_name   String?
-  image_url          String?
-  weight             Decimal?               @db.Decimal(6, 2)
-  volume             Decimal?               @db.Decimal(6, 3)
-  is_combo           Boolean?
-  is_monoproduct     Boolean?
-  pallet_units       Int?
-  base_id            Int?
-  volume_base        Decimal?               @db.Decimal(6, 3)
-  purchase_type_json Json?
-  is_available       Boolean?               @default(true)
-  created_at         DateTime?              @default(now()) @db.Timestamp(6)
-  movementItems      stock_movement_items[]
+  id              Int                    @id @default(autoincrement())
+  name            String
+  category_name   String
+  kg_pack         Decimal?               @db.Decimal(8, 3)
+  cajas_x_pack    Int?
+  kg_caja         Decimal?               @db.Decimal(8, 3)
+  unidades_x_caja Int?
+  unidades_x_pack Int?
+  kg_unidades     Decimal?               @db.Decimal(8, 3)
+  is_available    Boolean                @default(true)
+  created_at      DateTime               @default(now()) @db.Timestamp(6)
+  branch_stock    branch_stock[]
+  movementItems   stock_movement_items[]
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model reason_categories {
   id            Int               @id @default(autoincrement())
   code          String            @unique @db.VarChar(50)
@@ -75,7 +68,6 @@ model stock_backup {
   @@ignore
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model stock_movement_items {
   id          Int              @id @default(autoincrement())
   movement_id Int?
@@ -85,7 +77,6 @@ model stock_movement_items {
   product     products?        @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model stock_movements {
   id                 Int                    @id @default(autoincrement())
   from_branch_id     Int?

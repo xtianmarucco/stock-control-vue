@@ -44,7 +44,19 @@ const findStockByBranch = async (branchId, category) => {
 }
 
 const create = (data) =>
-  prisma.branches.create({ data })
+  prisma.$transaction(async (tx) => {
+    const branch = await tx.branches.create({ data })
+    const products = await tx.products.findMany({
+      where: { is_available: true },
+      select: { id: true }
+    })
+    if (products.length > 0) {
+      await tx.branch_stock.createMany({
+        data: products.map(p => ({ product_id: p.id, branch_id: branch.id, total: 0 }))
+      })
+    }
+    return branch
+  })
 
 const update = (id, data) =>
   prisma.branches.update({ where: { id }, data })
