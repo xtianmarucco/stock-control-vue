@@ -21,10 +21,12 @@ const getStockReport = async (filters) => {
         product_id: r.product_id,
         product_name: r.product_name,
         category_name: r.category_name,
+        unidades_x_pack: r.unidades_x_pack,
+        unidades_x_caja: r.unidades_x_caja,
         stock: {}
       })
     }
-    productMap.get(r.product_id).stock[r.branch_id] = r.total
+    productMap.get(r.product_id).stock[r.branch_id] = r.pack_total
   }
 
   const products = [...productMap.values()].map(p => ({

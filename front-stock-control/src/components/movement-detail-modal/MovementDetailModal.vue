@@ -98,7 +98,9 @@
                 <thead class="border-b border-[var(--color-border)] text-[var(--color-text-muted)]">
                   <tr>
                     <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em]">Producto</th>
-                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">Cantidad</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">Bultos</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">Cajas</th>
+                    <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em]">Unidades</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -107,9 +109,21 @@
                     :key="item.product_id"
                     class="border-b border-[var(--color-border)] last:border-b-0"
                   >
-                    <td class="px-4 py-3 text-[var(--color-text-base)]">{{ item.product_name }}</td>
-                    <td class="px-4 py-3 text-right font-semibold text-[var(--color-text-base)]">
-                      {{ formatQuantity(item.quantity) }}
+                    <td class="px-4 py-3 font-semibold text-[var(--color-text-base)]">{{ item.product_name }}</td>
+                    <td class="px-4 py-3 text-right">
+                      <span v-if="item.unidades_x_pack" class="font-semibold" :class="quantityColorClass(item.quantity)">
+                        {{ sign(item.quantity) }}{{ Math.floor(Math.abs(item.quantity) / item.unidades_x_pack) }}
+                      </span>
+                      <span v-else class="text-[var(--color-text-muted)]">—</span>
+                    </td>
+                    <td class="px-4 py-3 text-right">
+                      <span v-if="item.unidades_x_caja" class="font-semibold" :class="quantityColorClass(item.quantity)">
+                        {{ sign(item.quantity) }}{{ Math.floor(Math.abs(item.quantity) / item.unidades_x_caja) }}
+                      </span>
+                      <span v-else class="text-[var(--color-text-muted)]">—</span>
+                    </td>
+                    <td class="px-4 py-3 text-right font-semibold" :class="quantityColorClass(item.quantity)">
+                      {{ sign(item.quantity) }}{{ Math.abs(item.quantity) }}
                     </td>
                   </tr>
                 </tbody>
@@ -149,7 +163,9 @@ const error = ref(null)
 const formatDate = (date) => new Date(date).toLocaleDateString('es-AR')
 const formatType = (type) =>
   ({ TRANSFER: 'Traslado', ADJUSTMENT: 'Ajuste', INTERNAL: 'Interno' }[type] || type)
-const formatQuantity = (quantity) => quantity > 0 ? `+${quantity}` : `${quantity}`
+const sign = (q) => q >= 0 ? '+' : '-'
+const quantityColorClass = (q) =>
+  q >= 0 ? 'text-[#16A34A]' : 'text-[#DC2626]'
 
 const typeBadgeClass = (type) => {
   const base = 'inline-flex rounded-full px-2.5 py-1 text-xs font-semibold'

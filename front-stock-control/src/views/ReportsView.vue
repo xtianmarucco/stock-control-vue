@@ -1,143 +1,198 @@
 <template>
-  <div class="space-y-5">
+  <DashboardLayout>
+  <div class="space-y-6">
+
     <!-- Encabezado -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5 flex justify-between items-center">
-      <div>
-        <h1 class="text-xl font-bold text-[#193B68]">Reportes</h1>
-        <p class="text-sm text-gray-400 mt-0.5">Exportá reportes de stock en Excel o PDF</p>
+    <section class="rounded-[32px] border border-[var(--color-border)] bg-white px-6 py-6 shadow-[0_24px_50px_rgba(15,35,64,0.08)] sm:px-8">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div>
+          <p class="text-sm font-medium text-[var(--color-primary)]">Exportar datos</p>
+          <h1 class="mt-1 text-3xl font-bold text-[var(--color-text-base)]">Reportes de stock</h1>
+          <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+            Filtrá por categoría y exportá el inventario consolidado en Excel o PDF.
+          </p>
+        </div>
+
+        <div class="grid gap-3 sm:grid-cols-2 xl:min-w-[280px]">
+          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Productos</p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ products.length }}</p>
+          </div>
+          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Total global</p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ grandTotal }} <span class="text-base font-normal text-[var(--color-text-muted)]">bts</span></p>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
 
     <!-- Filtros + exportar -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm px-6 py-5">
+    <section class="rounded-[32px] border border-[var(--color-border)] bg-white px-6 py-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)] sm:px-8">
       <div class="flex flex-wrap items-end gap-4">
-        <div class="flex flex-col gap-1">
-          <label class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Categoría</label>
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Categoría</label>
           <select
             v-model="filters.category"
-            class="border border-gray-200 rounded-lg px-3 py-2 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] min-w-[200px]"
+            class="min-w-[220px] rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
           >
             <option value="">Todas las categorías</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
         </div>
 
-        <div class="flex gap-2 ml-auto">
+        <div class="flex gap-2">
           <button
-            class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-lg text-sm transition-colors"
+            class="rounded-2xl bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(20,121,255,0.22)] transition hover:bg-[var(--color-primary-hover)]"
             @click="fetchReport"
           >
             Filtrar
           </button>
           <button
-            class="border border-gray-200 text-[#193B68] font-medium px-5 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+            class="rounded-2xl border border-[var(--color-border)] px-5 py-3 text-sm font-semibold text-[var(--color-text-base)] transition hover:bg-[#F7FAFF]"
             @click="clearFilters"
           >
             Limpiar
           </button>
         </div>
 
-        <div class="flex gap-2">
+        <div class="ml-auto flex gap-2">
           <button
             :disabled="!products.length"
-            class="flex items-center gap-2 border border-[#16A34A] text-[#16A34A] font-medium px-4 py-2 rounded-lg text-sm hover:bg-green-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            class="flex items-center gap-2 rounded-2xl border border-[#16A34A] px-4 py-3 text-sm font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:cursor-not-allowed disabled:opacity-40"
             @click="exportExcel"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
             </svg>
             Excel
           </button>
           <button
             :disabled="!products.length"
-            class="flex items-center gap-2 border border-[#DC2626] text-[#DC2626] font-medium px-4 py-2 rounded-lg text-sm hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            class="flex items-center gap-2 rounded-2xl border border-[#DC2626] px-4 py-3 text-sm font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:opacity-40"
             @click="exportPdf"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
             </svg>
             PDF
           </button>
         </div>
       </div>
-    </div>
+    </section>
 
     <!-- Tabla -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-      <div class="flex items-center justify-between gap-3 border-b border-gray-100 bg-[#F8FAFD] px-6 py-4">
-        <p class="text-sm text-gray-500">
-          <span class="font-semibold text-[#193B68]">{{ products.length }}</span> productos
-          <template v-if="filters.category"> · {{ filters.category }}</template>
-        </p>
+    <section class="rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
+
+      <div v-if="loading" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center text-sm text-[var(--color-text-muted)]">
+        Cargando reporte...
       </div>
 
-      <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">Cargando...</div>
-      <div v-else-if="!products.length" class="text-center py-10 text-gray-400 text-sm">
-        Sin datos para mostrar
+      <div v-else-if="!products.length" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center">
+        <p class="text-base font-semibold text-[var(--color-text-base)]">Sin datos para mostrar</p>
+        <p class="mt-1 text-sm text-[var(--color-text-muted)]">Probá cambiando el filtro de categoría.</p>
       </div>
 
-      <div v-else class="overflow-x-auto">
-        <table class="min-w-full text-sm text-left">
-          <thead class="border-b border-gray-100 bg-[#F8FAFD]">
-            <tr>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Producto</th>
-              <th class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide whitespace-nowrap">Categoría</th>
-              <th
-                v-for="branch in branches"
-                :key="branch.id"
-                class="px-4 py-3 text-xs font-semibold text-gray-400 uppercase tracking-wide text-right whitespace-nowrap"
+      <div v-else class="overflow-hidden rounded-[28px] border border-[var(--color-border)]">
+        <!-- Sub-header -->
+        <div class="flex items-center gap-3 border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4">
+          <span
+            class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
+            :class="filters.category ? 'bg-[#EAF2FF] text-[var(--color-primary)]' : 'bg-[#EEF3FA] text-[var(--color-text-muted)]'"
+          >
+            {{ filters.category || 'Todas las categorías' }}
+          </span>
+          <span class="text-sm text-[var(--color-text-muted)]">
+            {{ products.length }} productos
+          </span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead class="border-b border-[var(--color-border)] bg-[#F8FAFD] text-[var(--color-text-muted)]">
+              <tr>
+                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] whitespace-nowrap">Producto</th>
+                <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] whitespace-nowrap">Categoría</th>
+                <th
+                  v-for="branch in branches"
+                  :key="branch.id"
+                  class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] whitespace-nowrap"
+                >
+                  {{ branch.name }}
+                </th>
+                <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-base)] whitespace-nowrap">
+                  Total (bultos)
+                </th>
+              </tr>
+            </thead>
+
+            <tbody class="divide-y divide-[var(--color-border)]">
+              <tr
+                v-for="product in products"
+                :key="product.product_id"
+                class="transition hover:bg-[#F0F6FF]"
               >
-                {{ branch.name }}
-              </th>
-              <th class="px-4 py-3 text-xs font-semibold text-[#193B68] uppercase tracking-wide text-right whitespace-nowrap">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr
-              v-for="product in products"
-              :key="product.product_id"
-              class="border-b border-gray-50 hover:bg-gray-50 transition-colors"
-            >
-              <td class="px-4 py-3 text-[#193B68] font-medium whitespace-nowrap">{{ product.product_name }}</td>
-              <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{{ product.category_name }}</td>
-              <td
-                v-for="branch in branches"
-                :key="branch.id"
-                class="px-4 py-3 text-right whitespace-nowrap"
-                :class="(product.stock[branch.id] ?? 0) <= 3 && (product.stock[branch.id] ?? 0) > 0
-                  ? 'text-orange-500 font-semibold'
-                  : (product.stock[branch.id] ?? 0) === 0
-                    ? 'text-gray-300'
-                    : 'text-[#193B68]'"
-              >
-                {{ product.stock[branch.id] ?? 0 }}
-              </td>
-              <td class="px-4 py-3 text-right font-bold text-[#193B68] whitespace-nowrap">
-                {{ product.total }}
-              </td>
-            </tr>
-          </tbody>
-          <tfoot class="border-t-2 border-gray-200 bg-[#F8FAFD]">
-            <tr>
-              <td class="px-4 py-3 text-xs font-bold text-[#193B68] uppercase tracking-wide" colspan="2">Totales</td>
-              <td
-                v-for="branch in branches"
-                :key="branch.id"
-                class="px-4 py-3 text-right font-bold text-[#193B68]"
-              >
-                {{ branchTotal(branch.id) }}
-              </td>
-              <td class="px-4 py-3 text-right font-bold text-[#193B68]">{{ grandTotal }}</td>
-            </tr>
-          </tfoot>
-        </table>
+                <td class="px-5 py-3.5 font-semibold text-[var(--color-text-base)] whitespace-nowrap">
+                  {{ product.product_name }}
+                </td>
+                <td class="px-5 py-3.5 whitespace-nowrap">
+                  <span class="inline-flex rounded-full bg-[#EEF3FA] px-3 py-1 text-xs font-semibold text-[var(--color-text-base)]">
+                    {{ product.category_name }}
+                  </span>
+                </td>
+                <td
+                  v-for="branch in branches"
+                  :key="branch.id"
+                  class="px-5 py-3.5 text-right whitespace-nowrap font-medium"
+                  :class="(product.stock[branch.id] ?? 0) === 0
+                    ? 'text-[var(--color-text-muted)]'
+                    : (product.stock[branch.id] ?? 0) <= 3
+                      ? 'text-[#DC2626]'
+                      : 'text-[var(--color-text-base)]'"
+                >
+                  {{ product.stock[branch.id] ?? 0 }}
+                  <span
+                    v-if="(product.stock[branch.id] ?? 0) > 0"
+                    class="text-xs font-normal text-[var(--color-text-muted)]"
+                  >bts</span>
+                </td>
+                <td class="px-5 py-3.5 text-right font-bold text-[var(--color-text-base)] whitespace-nowrap">
+                  {{ product.total }}
+                  <span class="text-xs font-normal text-[var(--color-text-muted)]">bts</span>
+                </td>
+              </tr>
+            </tbody>
+
+            <tfoot class="border-t-2 border-[var(--color-border)] bg-[#F8FAFD]">
+              <tr>
+                <td class="px-5 py-4 text-xs font-bold uppercase tracking-[0.16em] text-[var(--color-text-base)]" colspan="2">
+                  Totales
+                </td>
+                <td
+                  v-for="branch in branches"
+                  :key="branch.id"
+                  class="px-5 py-4 text-right font-bold text-[var(--color-text-base)]"
+                >
+                  {{ branchTotal(branch.id) }}
+                  <span class="text-xs font-normal text-[var(--color-text-muted)]">bts</span>
+                </td>
+                <td class="px-5 py-4 text-right font-bold text-[var(--color-primary)]">
+                  {{ grandTotal }}
+                  <span class="text-xs font-normal text-[var(--color-primary)]">bts</span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
-    </div>
+    </section>
+
   </div>
+  </DashboardLayout>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import DashboardLayout from '../layouts/DashboardLayout.vue'
 import { getStockReport } from '../services/ReportsService.js'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'

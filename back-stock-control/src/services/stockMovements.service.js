@@ -132,7 +132,10 @@ function formatMovement(m) {
     items: (m.items ?? []).map(i => ({
       product_id: i.product_id,
       product_name: i.product?.name ?? null,
-      quantity: i.quantity
+      quantity: i.quantity,
+      unidades_x_pack: i.product?.unidades_x_pack ?? null,
+      unidades_x_caja: i.product?.unidades_x_caja ?? null,
+      cajas_x_pack: i.product?.cajas_x_pack ?? null
     }))
   }
 }
