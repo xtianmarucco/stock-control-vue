@@ -37,6 +37,32 @@
         </button>
       </div>
 
+      <!-- Acciones admin -->
+      <div v-if="isAdmin" class="flex gap-2 border-b border-[var(--color-border)] px-6 py-3">
+        <button
+          class="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-text-base)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+          @click="$emit('edit', preview)"
+        >
+          ✎ Editar
+        </button>
+        <button
+          v-if="preview?.is_available !== false"
+          :disabled="actionLoading"
+          class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
+          @click="deactivate"
+        >
+          {{ actionLoading ? '...' : '✕ Dar de baja' }}
+        </button>
+        <button
+          v-else
+          :disabled="actionLoading"
+          class="flex items-center gap-1.5 rounded-xl border border-[#BBF7D0] px-3 py-2 text-xs font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:opacity-50"
+          @click="restore"
+        >
+          {{ actionLoading ? '...' : '↩ Reactivar' }}
+        </button>
+      </div>
+
       <!-- Body -->
       <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
 
@@ -200,14 +226,49 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { getProductById } from '../../services/ProductService.js'
+import { getProductById, deleteProduct, restoreProduct } from '../../services/ProductService.js'
+import { useAuthStore } from '../../stores/authStore.js'
+import { useToastStore } from '../../stores/toastStore.js'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
   preview: { type: Object, default: null },
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'edit', 'deactivated', 'restored'])
+
+const authStore = useAuthStore()
+const toast = useToastStore()
+const isAdmin = computed(() => authStore.user?.role === 'admin')
+const actionLoading = ref(false)
+
+const deactivate = async () => {
+  if (!props.preview?.id) return
+  actionLoading.value = true
+  try {
+    await deleteProduct(props.preview.id)
+    toast.add('Producto dado de baja correctamente')
+    emit('deactivated')
+  } catch {
+    toast.add('No se pudo dar de baja el producto', 'error')
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const restore = async () => {
+  if (!props.preview?.id) return
+  actionLoading.value = true
+  try {
+    await restoreProduct(props.preview.id)
+    toast.add('Producto reactivado correctamente')
+    emit('restored')
+  } catch {
+    toast.add('No se pudo reactivar el producto', 'error')
+  } finally {
+    actionLoading.value = false
+  }
+}
 
 const product = ref(null)
 const loading = ref(false)

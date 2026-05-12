@@ -83,7 +83,9 @@ const pageTitles = {
   BranchesView: 'Sucursales',
   UsersView: 'Usuarios',
   BranchProducts: 'Productos',
-  StockMovementsView: 'Movimientos de Stock'
+  ProductsCatalog: 'Catálogo de productos',
+  StockMovementsView: 'Movimientos de Stock',
+  ReportsView: 'Reportes de stock'
 }
 
 const pageTitle = computed(() => pageTitles[route.name] ?? '')
