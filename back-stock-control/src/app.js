@@ -8,6 +8,8 @@ const routes = require('./routes')
 const app = express()
 const PORT = process.env.PORT || 3000
 
+app.set('trust proxy', 1)
+
 app.use(cors({
   origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
   credentials: true
@@ -22,8 +24,8 @@ app.use(session({
   saveUninitialized: false,
   cookie: {
     httpOnly: true,
-    secure: false,
-    sameSite: 'strict',
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
     maxAge: 8 * 60 * 60 * 1000 // 8 hours
   }
 }))
