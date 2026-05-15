@@ -11,7 +11,7 @@
           class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-full text-sm transition-colors"
           @click="openCreate"
         >
-          + Nueva sucursal
+          + Nueva Sucursal
         </button>
       </div>
 
