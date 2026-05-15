@@ -26,7 +26,25 @@ const findByName = (name) =>
     where: { name: { equals: name, mode: 'insensitive' } }
   })
 
-const create = (data) => prisma.products.create({ data })
+const create = async (data) => {
+  return prisma.$transaction(async (tx) => {
+    const product = await tx.products.create({ data })
+
+    const branches = await tx.branches.findMany({
+      where: { is_active: true },
+      select: { id: true }
+    })
+
+    if (branches.length > 0) {
+      await tx.branch_stock.createMany({
+        data: branches.map(b => ({ product_id: product.id, branch_id: b.id, total: 0 })),
+        skipDuplicates: true
+      })
+    }
+
+    return product
+  })
+}
 
 const update = (id, data) => prisma.products.update({ where: { id }, data })
 
