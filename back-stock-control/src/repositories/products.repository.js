@@ -51,4 +51,7 @@ const update = (id, data) => prisma.products.update({ where: { id }, data })
 const softDelete = (id) =>
   prisma.products.update({ where: { id }, data: { is_available: false } })
 
-module.exports = { findAll, findById, findByName, findCategories, create, update, softDelete }
+const hardDelete = (id) =>
+  prisma.products.delete({ where: { id } })
+
+module.exports = { findAll, findById, findByName, findCategories, create, update, softDelete, hardDelete }

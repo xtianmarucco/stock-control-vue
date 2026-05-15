@@ -6,6 +6,7 @@
       @edit="openEditModal"
       @deactivated="handleDeactivated"
       @restored="handleRestored"
+      @destroyed="handleDestroyed"
     />
 
     <ProductFormModal
@@ -344,6 +345,11 @@ const handleDeactivated = () => {
 const handleRestored = () => {
   drawerOpen.value = false
   fetchProducts()
+}
+
+const handleDestroyed = () => {
+  fetchProducts()
+  fetchCategories()
 }
 
 onMounted(async () => {

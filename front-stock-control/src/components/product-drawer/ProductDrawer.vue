@@ -38,29 +38,60 @@
       </div>
 
       <!-- Acciones admin -->
-      <div v-if="isAdmin" class="flex gap-2 border-b border-[var(--color-border)] px-6 py-3">
-        <button
-          class="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-text-base)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
-          @click="$emit('edit', preview)"
-        >
-          ✎ Editar
-        </button>
-        <button
-          v-if="preview?.is_available !== false"
-          :disabled="actionLoading"
-          class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
-          @click="deactivate"
-        >
-          {{ actionLoading ? '...' : '✕ Dar de baja' }}
-        </button>
-        <button
-          v-else
-          :disabled="actionLoading"
-          class="flex items-center gap-1.5 rounded-xl border border-[#BBF7D0] px-3 py-2 text-xs font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:opacity-50"
-          @click="restore"
-        >
-          {{ actionLoading ? '...' : '↩ Reactivar' }}
-        </button>
+      <div v-if="isAdmin" class="border-b border-[var(--color-border)] px-6 py-3">
+        <div class="flex gap-2">
+          <button
+            class="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-text-base)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            @click="$emit('edit', preview)"
+          >
+            ✎ Editar
+          </button>
+          <button
+            v-if="preview?.is_available !== false"
+            :disabled="actionLoading"
+            class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
+            @click="deactivate"
+          >
+            {{ actionLoading ? '...' : '✕ Dar de baja' }}
+          </button>
+          <template v-else>
+            <button
+              :disabled="actionLoading"
+              class="flex items-center gap-1.5 rounded-xl border border-[#BBF7D0] px-3 py-2 text-xs font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:opacity-50"
+              @click="restore"
+            >
+              {{ actionLoading ? '...' : '↩ Reactivar' }}
+            </button>
+            <button
+              :disabled="actionLoading"
+              class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
+              @click="confirmingDestroy = true"
+            >
+              🗑 Eliminar
+            </button>
+          </template>
+        </div>
+
+        <!-- Confirmación de eliminación definitiva -->
+        <div v-if="confirmingDestroy" class="mt-3 rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] px-4 py-3">
+          <p class="text-xs font-semibold text-[#DC2626]">Esta acción es irreversible. ¿Eliminar definitivamente este producto?</p>
+          <div class="mt-2 flex gap-2">
+            <button
+              :disabled="actionLoading"
+              class="rounded-lg bg-[#DC2626] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#B91C1C] disabled:opacity-50"
+              @click="destroyConfirmed"
+            >
+              {{ actionLoading ? '...' : 'Sí, eliminar' }}
+            </button>
+            <button
+              :disabled="actionLoading"
+              class="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-base)] transition hover:bg-[#F7FAFF] disabled:opacity-50"
+              @click="confirmingDestroy = false"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Body -->
@@ -226,7 +257,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { getProductById, deleteProduct, restoreProduct } from '../../services/ProductService.js'
+import { getProductById, deleteProduct, restoreProduct, destroyProduct } from '../../services/ProductService.js'
 import { useAuthStore } from '../../stores/authStore.js'
 import { useToastStore } from '../../stores/toastStore.js'
 
@@ -235,12 +266,13 @@ const props = defineProps({
   preview: { type: Object, default: null },
 })
 
-const emit = defineEmits(['update:modelValue', 'edit', 'deactivated', 'restored'])
+const emit = defineEmits(['update:modelValue', 'edit', 'deactivated', 'restored', 'destroyed'])
 
 const authStore = useAuthStore()
 const toast = useToastStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 const actionLoading = ref(false)
+const confirmingDestroy = ref(false)
 
 const deactivate = async () => {
   if (!props.preview?.id) return
@@ -265,6 +297,22 @@ const restore = async () => {
     emit('restored')
   } catch {
     toast.add('No se pudo reactivar el producto', 'error')
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const destroyConfirmed = async () => {
+  if (!props.preview?.id) return
+  actionLoading.value = true
+  try {
+    await destroyProduct(props.preview.id)
+    toast.add('Producto eliminado definitivamente')
+    confirmingDestroy.value = false
+    emit('destroyed')
+    emit('update:modelValue', false)
+  } catch {
+    toast.add('No se pudo eliminar el producto', 'error')
   } finally {
     actionLoading.value = false
   }
@@ -309,7 +357,8 @@ const conversionRatios = computed(() => {
 watch(
   () => props.modelValue,
   async (open) => {
-    if (!open || !props.preview?.id) return
+    if (!open) { confirmingDestroy.value = false; return }
+    if (!props.preview?.id) return
     loading.value = true
     error.value = null
     product.value = null

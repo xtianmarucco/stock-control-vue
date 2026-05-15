@@ -42,3 +42,7 @@ export const restoreProduct = async (id) => {
   const res = await apiClient.patch(`/products/${id}/restore`)
   return res.data.data
 }
+
+export const destroyProduct = async (id) => {
+  await apiClient.delete(`/products/${id}/permanent`)
+}

@@ -84,10 +84,17 @@ const remove = async (id) => {
   return repo.softDelete(id)
 }
 
+const destroy = async (id) => {
+  const existing = await repo.findById(id)
+  if (!existing) throw createError('Product not found', 'NOT_FOUND', 404)
+  if (existing.is_available) throw createError('Solo se pueden eliminar productos inactivos', 'VALIDATION_ERROR', 400)
+  return repo.hardDelete(id)
+}
+
 const restore = async (id) => {
   const existing = await repo.findById(id)
   if (!existing) throw createError('Product not found', 'NOT_FOUND', 404)
   return repo.update(id, { is_available: true })
 }
 
-module.exports = { getAll, getCategories, getById, create, update, remove, restore }
+module.exports = { getAll, getCategories, getById, create, update, remove, restore, destroy }

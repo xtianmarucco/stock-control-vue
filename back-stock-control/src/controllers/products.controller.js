@@ -65,4 +65,13 @@ const restore = async (req, res) => {
   }
 }
 
-module.exports = { getAll, getCategories, getProductById, create, update, remove, restore }
+const destroy = async (req, res) => {
+  try {
+    await service.destroy(Number(req.params.id))
+    res.json({ success: true })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
+module.exports = { getAll, getCategories, getProductById, create, update, remove, restore, destroy }
