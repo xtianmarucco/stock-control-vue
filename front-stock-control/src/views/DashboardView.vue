@@ -181,5 +181,4 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-@import url('https://unpkg.com/lucide-static@latest/icons.css');
 </style>
