@@ -3,9 +3,12 @@ const { handleError } = require('../utils/handleError')
 
 const getStockMovements = async (req, res) => {
   try {
-    const movements = await service.getAll(req.query)
-    const data = movements.map(service.formatMovement)
-    res.json({ success: true, data })
+    const { data, total, page, pageSize } = await service.getAll(req.query)
+    res.json({
+      success: true,
+      data,
+      meta: { total, page, pageSize, pages: Math.ceil(total / pageSize) }
+    })
   } catch (err) {
     handleError(res, err)
   }

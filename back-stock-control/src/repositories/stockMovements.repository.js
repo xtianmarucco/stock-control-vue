@@ -26,7 +26,9 @@ const enrichWithUser = async (movements) => {
 }
 
 const findAll = async (filters = {}) => {
-  const { branch_id, type, from, to } = filters
+  const { branch_id, type, from, to, page = 1, pageSize = 30 } = filters
+  const skip = (Number(page) - 1) * Number(pageSize)
+  const take = Number(pageSize)
   const where = {}
 
   if (branch_id) {
@@ -44,13 +46,13 @@ const findAll = async (filters = {}) => {
     }
   }
 
-  const movements = await prisma.stock_movements.findMany({
-    where,
-    include: MOVEMENT_INCLUDE,
-    orderBy: { created_at: 'desc' }
-  })
+  const [total, movements] = await Promise.all([
+    prisma.stock_movements.count({ where }),
+    prisma.stock_movements.findMany({ where, include: MOVEMENT_INCLUDE, orderBy: { created_at: 'desc' }, skip, take })
+  ])
 
-  return enrichWithUser(movements)
+  const enriched = await enrichWithUser(movements)
+  return { movements: enriched, total, page: Number(page), pageSize: Number(pageSize) }
 }
 
 const findById = async (id) => {

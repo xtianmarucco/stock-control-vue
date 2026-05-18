@@ -4,6 +4,7 @@ const cors = require('cors')
 const session = require('express-session')
 const sessionStore = require('./lib/sessionStore')
 const routes = require('./routes')
+const { handleError } = require('./utils/handleError')
 
 const app = express()
 const PORT = process.env.PORT || 3000
@@ -33,5 +34,13 @@ app.use(session({
 app.use('/api', routes)
 
 app.get('/', (_req, res) => res.json({ success: true, data: 'API running' }))
+
+app.use((_req, res) => {
+  res.status(404).json({ success: false, error: { message: 'Route not found', code: 'NOT_FOUND' } })
+})
+
+app.use((err, _req, res, _next) => {
+  handleError(res, err)
+})
 
 app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
