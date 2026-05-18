@@ -296,7 +296,7 @@ const setUnit = (row, unit) => {
 
 const addProduct = (product) => {
   if (isAdded(product.id)) return
-  localItems.value.push({
+  localItems.value.unshift({
     uid: crypto.randomUUID(),
     product_id: product.id,
     product_name: product.name,

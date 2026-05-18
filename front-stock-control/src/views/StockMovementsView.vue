@@ -9,7 +9,7 @@
       <button
         v-if="isAdmin"
         class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-full text-sm transition-colors"
-        @click="openMovementModal"
+        @click="openMovementForm"
       >
         + Nuevo movimiento
       </button>
@@ -153,25 +153,18 @@
     </div>
 
     <MovementDetailModal v-model="isDetailModalOpen" :movement-id="selectedMovementId" />
-
-    <StockMovementModal
-      v-if="showMovementModal"
-      :branches="branches"
-      :default-branch-id="Number(filters.branch) || branches[0]?.id"
-      @close="showMovementModal = false"
-      @saved="onMovementSaved"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
 import { getStockMovements } from '../services/MovementsService.js'
 import { getBranches } from '../services/BranchService.js'
-import StockMovementModal from '../components/StockMovementModal/StockMovementModal.vue'
 import { useAuthStore } from '../stores/authStore'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
@@ -181,7 +174,6 @@ const filters = ref({ branch: '', type: '', from: '', to: '' })
 const loading = ref(false)
 const isDetailModalOpen = ref(false)
 const selectedMovementId = ref(null)
-const showMovementModal = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(25)
 const pageSizeOptions = [10, 25, 50, 100]
@@ -246,11 +238,7 @@ const openDetailModal = (id) => {
   isDetailModalOpen.value = true
 }
 
-const openMovementModal = async () => {
-  showMovementModal.value = true
-}
-
-const onMovementSaved = () => fetchMovements()
+const openMovementForm = () => router.push('/movements/new')
 const goToPreviousPage = () => {
   if (currentPage.value > 1) currentPage.value--
 }
