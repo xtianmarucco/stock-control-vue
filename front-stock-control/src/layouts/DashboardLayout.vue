@@ -85,6 +85,7 @@ const pageTitles = {
   BranchProducts: 'Productos',
   ProductsCatalog: 'Catálogo de productos',
   StockMovementsView: 'Movimientos de Stock',
+  StockMovementFormView: 'Nuevo movimiento',
   ReportsView: 'Reportes de stock'
 }
 

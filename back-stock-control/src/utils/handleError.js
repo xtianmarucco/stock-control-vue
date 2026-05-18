@@ -14,6 +14,12 @@ const handleError = (res, err) => {
         error: { message: 'Registro no encontrado', code: 'NOT_FOUND' }
       })
     }
+    if (err.code === 'P2003') {
+      return res.status(409).json({
+        success: false,
+        error: { message: 'Violación de referencia entre registros', code: 'CONFLICT' }
+      })
+    }
     console.error('[Prisma error]', err.code, err.meta)
     return res.status(500).json({
       success: false,
@@ -24,6 +30,8 @@ const handleError = (res, err) => {
   const status = err.status || 500
   const code = err.code || 'INTERNAL_ERROR'
   const message = status < 500 ? err.message : 'Internal server error'
+
+  if (status >= 500) console.error('[Server error]', err)
 
   res.status(status).json({
     success: false,

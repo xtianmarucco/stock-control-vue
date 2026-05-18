@@ -47,6 +47,11 @@ const routes = [
         path: '',
         name: 'StockMovementsView',
         component: () => import('../views/StockMovementsView.vue')
+      },
+      {
+        path: 'new',
+        name: 'StockMovementFormView',
+        component: () => import('../views/StockMovementFormView.vue')
       }
     ]
   },

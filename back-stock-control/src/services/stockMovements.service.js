@@ -4,8 +4,8 @@ const { createError } = require('../utils/handleError')
 const VALID_TYPES = ['TRANSFER', 'ADJUSTMENT', 'INTERNAL']
 
 const getAll = async (filters) => {
-  const movements = await repo.findAll(filters)
-  return movements.map(formatMovement)
+  const { movements, total, page, pageSize } = await repo.findAll(filters)
+  return { data: movements.map(formatMovement), total, page, pageSize }
 }
 
 const getById = async (id) => {

@@ -43,5 +43,4 @@
 
 <style scoped>
 /* Para íconos, podés usar lucide o Heroicons. Aquí usamos "i-lucide-*" como ejemplo */
-@import url('https://unpkg.com/lucide-static@latest/icons.css');
 </style>

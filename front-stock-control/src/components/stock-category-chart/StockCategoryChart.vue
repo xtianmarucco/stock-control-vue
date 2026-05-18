@@ -18,8 +18,10 @@
     </div>
 
     <div class="p-6">
-      <div v-if="loading" class="flex items-center justify-center h-48 text-gray-300 text-sm">
-        Cargando...
+      <div v-if="loading" class="flex items-end gap-2 h-48 px-2">
+        <div v-for="(h, i) in [55, 90, 38, 110, 72, 48, 88, 62, 78, 42]" :key="i" class="flex-1 flex items-end">
+          <SkeletonBlock width="100%" :height="`${h}px`" rounded="4px 4px 0 0" />
+        </div>
       </div>
       <div v-else-if="!chartData" class="flex items-center justify-center h-48 text-gray-400 text-sm">
         Seleccioná una categoría
@@ -35,6 +37,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { Bar } from 'vue-chartjs'
+import SkeletonBlock from '../ui/SkeletonBlock.vue'
 import {
   Chart as ChartJS,
   Title,

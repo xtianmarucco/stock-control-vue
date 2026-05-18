@@ -99,8 +99,19 @@
         </section>
 
         <section class="rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
-          <div v-if="loading" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-10 text-center text-sm text-[var(--color-text-muted)]">
-            Cargando productos de la sucursal...
+          <div v-if="loading" class="overflow-hidden rounded-[28px] border border-[var(--color-border)]">
+            <div class="border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4">
+              <SkeletonBlock width="100px" height="11px" rounded="4px" />
+            </div>
+            <div class="divide-y divide-[var(--color-border)]">
+              <div v-for="i in 5" :key="i" class="flex items-center justify-between gap-4 px-5 py-4">
+                <div class="flex-1">
+                  <SkeletonBlock :width="`${120 + i * 14}px`" height="14px" rounded="4px" class="mb-2" />
+                  <SkeletonBlock width="80px" height="11px" rounded="4px" />
+                </div>
+                <SkeletonBlock width="64px" height="20px" rounded="999px" />
+              </div>
+            </div>
           </div>
 
           <div v-else-if="filteredProducts.length === 0" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-10 text-center">
@@ -212,6 +223,7 @@
 
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { useRoute } from 'vue-router'
 import { getStockByBranch } from '../services/ProductService.js'
 import { getStockSummaryByCategory } from '../services/stockService.js'

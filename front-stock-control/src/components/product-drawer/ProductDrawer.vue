@@ -38,41 +38,111 @@
       </div>
 
       <!-- Acciones admin -->
-      <div v-if="isAdmin" class="flex gap-2 border-b border-[var(--color-border)] px-6 py-3">
-        <button
-          class="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-text-base)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
-          @click="$emit('edit', preview)"
-        >
-          ✎ Editar
-        </button>
-        <button
-          v-if="preview?.is_available !== false"
-          :disabled="actionLoading"
-          class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
-          @click="deactivate"
-        >
-          {{ actionLoading ? '...' : '✕ Dar de baja' }}
-        </button>
-        <button
-          v-else
-          :disabled="actionLoading"
-          class="flex items-center gap-1.5 rounded-xl border border-[#BBF7D0] px-3 py-2 text-xs font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:opacity-50"
-          @click="restore"
-        >
-          {{ actionLoading ? '...' : '↩ Reactivar' }}
-        </button>
+      <div v-if="isAdmin" class="border-b border-[var(--color-border)] px-6 py-3">
+        <div class="flex gap-2">
+          <button
+            class="flex items-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2 text-xs font-semibold text-[var(--color-text-base)] transition hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]"
+            @click="$emit('edit', preview)"
+          >
+            ✎ Editar
+          </button>
+          <button
+            v-if="preview?.is_available !== false"
+            :disabled="actionLoading"
+            class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
+            @click="deactivate"
+          >
+            {{ actionLoading ? '...' : '✕ Dar de baja' }}
+          </button>
+          <template v-else>
+            <button
+              :disabled="actionLoading"
+              class="flex items-center gap-1.5 rounded-xl border border-[#BBF7D0] px-3 py-2 text-xs font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:opacity-50"
+              @click="restore"
+            >
+              {{ actionLoading ? '...' : '↩ Reactivar' }}
+            </button>
+            <button
+              :disabled="actionLoading"
+              class="flex items-center gap-1.5 rounded-xl border border-[#FCA5A5] px-3 py-2 text-xs font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:opacity-50"
+              @click="confirmingDestroy = true"
+            >
+              🗑 Eliminar
+            </button>
+          </template>
+        </div>
+
+        <!-- Confirmación de eliminación definitiva -->
+        <div v-if="confirmingDestroy" class="mt-3 rounded-xl border border-[#FCA5A5] bg-[#FEF2F2] px-4 py-3">
+          <p class="text-xs font-semibold text-[#DC2626]">Esta acción es irreversible. ¿Eliminar definitivamente este producto?</p>
+          <div class="mt-2 flex gap-2">
+            <button
+              :disabled="actionLoading"
+              class="rounded-lg bg-[#DC2626] px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-[#B91C1C] disabled:opacity-50"
+              @click="destroyConfirmed"
+            >
+              {{ actionLoading ? '...' : 'Sí, eliminar' }}
+            </button>
+            <button
+              :disabled="actionLoading"
+              class="rounded-lg border border-[var(--color-border)] px-3 py-1.5 text-xs font-semibold text-[var(--color-text-base)] transition hover:bg-[#F7FAFF] disabled:opacity-50"
+              @click="confirmingDestroy = false"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
       </div>
 
       <!-- Body -->
       <div class="flex-1 overflow-y-auto px-6 py-6 space-y-6">
 
         <!-- Loading -->
-        <div v-if="loading" class="flex flex-col items-center justify-center gap-3 py-16 text-[var(--color-text-muted)]">
-          <svg class="h-8 w-8 animate-spin text-[var(--color-primary)]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
-          </svg>
-          <p class="text-sm">Cargando detalles...</p>
+        <div v-if="loading" class="space-y-5">
+          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-4">
+            <SkeletonBlock width="80px" height="10px" rounded="4px" class="mb-3" />
+            <div class="flex items-center gap-3 mt-2">
+              <SkeletonBlock width="56px" height="36px" rounded="6px" />
+              <div>
+                <SkeletonBlock width="80px" height="14px" rounded="4px" class="mb-2" />
+                <SkeletonBlock width="56px" height="20px" rounded="999px" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <SkeletonBlock width="110px" height="10px" rounded="4px" class="mb-3" />
+            <div class="space-y-3">
+              <div class="rounded-[20px] border border-[var(--color-border)] bg-white px-5 py-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <SkeletonBlock width="28px" height="28px" rounded="50%" />
+                    <SkeletonBlock width="56px" height="14px" rounded="4px" />
+                  </div>
+                  <SkeletonBlock width="52px" height="14px" rounded="4px" />
+                </div>
+                <div class="mt-3 flex gap-2">
+                  <SkeletonBlock width="110px" height="22px" rounded="999px" />
+                  <SkeletonBlock width="88px" height="22px" rounded="999px" />
+                </div>
+              </div>
+              <div class="rounded-[20px] border border-[var(--color-border)] bg-white px-5 py-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <SkeletonBlock width="28px" height="28px" rounded="50%" />
+                    <SkeletonBlock width="64px" height="14px" rounded="4px" />
+                  </div>
+                  <SkeletonBlock width="52px" height="14px" rounded="4px" />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="rounded-[20px] border border-[#EAF2FF] bg-[#F5F9FF] px-5 py-4">
+            <SkeletonBlock width="100px" height="10px" rounded="4px" class="mb-3" />
+            <div class="flex flex-wrap gap-2">
+              <SkeletonBlock width="130px" height="26px" rounded="999px" />
+              <SkeletonBlock width="110px" height="26px" rounded="999px" />
+            </div>
+          </div>
         </div>
 
         <!-- Error -->
@@ -226,7 +296,8 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue'
-import { getProductById, deleteProduct, restoreProduct } from '../../services/ProductService.js'
+import { getProductById, deleteProduct, restoreProduct, destroyProduct } from '../../services/ProductService.js'
+import SkeletonBlock from '../ui/SkeletonBlock.vue'
 import { useAuthStore } from '../../stores/authStore.js'
 import { useToastStore } from '../../stores/toastStore.js'
 
@@ -235,12 +306,13 @@ const props = defineProps({
   preview: { type: Object, default: null },
 })
 
-const emit = defineEmits(['update:modelValue', 'edit', 'deactivated', 'restored'])
+const emit = defineEmits(['update:modelValue', 'edit', 'deactivated', 'restored', 'destroyed'])
 
 const authStore = useAuthStore()
 const toast = useToastStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 const actionLoading = ref(false)
+const confirmingDestroy = ref(false)
 
 const deactivate = async () => {
   if (!props.preview?.id) return
@@ -265,6 +337,22 @@ const restore = async () => {
     emit('restored')
   } catch {
     toast.add('No se pudo reactivar el producto', 'error')
+  } finally {
+    actionLoading.value = false
+  }
+}
+
+const destroyConfirmed = async () => {
+  if (!props.preview?.id) return
+  actionLoading.value = true
+  try {
+    await destroyProduct(props.preview.id)
+    toast.add('Producto eliminado definitivamente')
+    confirmingDestroy.value = false
+    emit('destroyed')
+    emit('update:modelValue', false)
+  } catch {
+    toast.add('No se pudo eliminar el producto', 'error')
   } finally {
     actionLoading.value = false
   }
@@ -309,7 +397,8 @@ const conversionRatios = computed(() => {
 watch(
   () => props.modelValue,
   async (open) => {
-    if (!open || !props.preview?.id) return
+    if (!open) { confirmingDestroy.value = false; return }
+    if (!props.preview?.id) return
     loading.value = true
     error.value = null
     product.value = null

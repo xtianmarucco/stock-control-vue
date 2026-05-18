@@ -10,6 +10,13 @@
       </thead>
 
       <tbody>
+        <template v-if="loading">
+          <tr v-for="i in 5" :key="`sk-${i}`" class="border-t">
+            <td class="px-6 py-3"><SkeletonBlock :width="`${130 + i * 12}px`" height="14px" /></td>
+            <td class="px-6 py-3"><SkeletonBlock width="100px" height="14px" /></td>
+            <td class="px-6 py-3 text-right"><SkeletonBlock width="36px" height="14px" style="margin-left: auto" /></td>
+          </tr>
+        </template>
         <tr
           v-for="product in filteredProducts"
           :key="product.id"
@@ -25,8 +32,6 @@
         </tr>
       </tbody>
     </table>
-
-    <div v-if="loading" class="text-center py-4 text-gray-500">Cargando...</div>
     <div v-else-if="filteredProducts.length === 0" class="text-center py-4 text-gray-500">
       No se encontraron productos
     </div>
@@ -36,6 +41,7 @@
 <script setup>
 import { ref, watch, onMounted, computed } from 'vue'
 import { getProductsWithStock, getProductsByCategory, getProductsByBranch } from '../../services/ProductService'
+import SkeletonBlock from '../ui/SkeletonBlock.vue'
 
 const props = defineProps({
   branchId: { type: Number, required: true },

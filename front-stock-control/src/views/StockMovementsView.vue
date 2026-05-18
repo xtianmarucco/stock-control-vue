@@ -9,7 +9,7 @@
       <button
         v-if="isAdmin"
         class="bg-[#1479FF] hover:bg-[#0f66e0] text-white font-medium px-5 py-2 rounded-full text-sm transition-colors"
-        @click="openMovementModal"
+        @click="openMovementForm"
       >
         + Nuevo movimiento
       </button>
@@ -93,6 +93,16 @@
           </tr>
         </thead>
         <tbody>
+          <template v-if="loading">
+            <tr v-for="i in 5" :key="`sk-${i}`" class="border-b border-gray-50">
+              <td class="px-6 py-4"><SkeletonBlock width="80px" height="15px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="70px" height="20px" rounded="999px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="130px" height="15px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="110px" height="15px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="120px" height="15px" /></td>
+              <td class="px-6 py-4 text-right"><SkeletonBlock width="24px" height="15px" rounded="6px" style="margin-left: auto" /></td>
+            </tr>
+          </template>
           <tr
             v-for="mov in paginatedMovements"
             :key="mov.id"
@@ -113,9 +123,6 @@
 
       <div v-if="!loading && movements.length === 0" class="text-center py-10 text-gray-400 text-sm">
         No se encontraron movimientos
-      </div>
-      <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">
-        Cargando...
       </div>
 
       <div
@@ -153,25 +160,19 @@
     </div>
 
     <MovementDetailModal v-model="isDetailModalOpen" :movement-id="selectedMovementId" />
-
-    <StockMovementModal
-      v-if="showMovementModal"
-      :branches="branches"
-      :default-branch-id="Number(filters.branch) || branches[0]?.id"
-      @close="showMovementModal = false"
-      @saved="onMovementSaved"
-    />
   </div>
 </template>
 
 <script setup>
 import { ref, onMounted, computed, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { getStockMovements } from '../services/MovementsService.js'
 import { getBranches } from '../services/BranchService.js'
-import StockMovementModal from '../components/StockMovementModal/StockMovementModal.vue'
 import { useAuthStore } from '../stores/authStore'
 
+const router = useRouter()
 const authStore = useAuthStore()
 const isAdmin = computed(() => authStore.user?.role === 'admin')
 
@@ -181,7 +182,6 @@ const filters = ref({ branch: '', type: '', from: '', to: '' })
 const loading = ref(false)
 const isDetailModalOpen = ref(false)
 const selectedMovementId = ref(null)
-const showMovementModal = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(25)
 const pageSizeOptions = [10, 25, 50, 100]
@@ -246,11 +246,7 @@ const openDetailModal = (id) => {
   isDetailModalOpen.value = true
 }
 
-const openMovementModal = async () => {
-  showMovementModal.value = true
-}
-
-const onMovementSaved = () => fetchMovements()
+const openMovementForm = () => router.push('/movements/new')
 const goToPreviousPage = () => {
   if (currentPage.value > 1) currentPage.value--
 }

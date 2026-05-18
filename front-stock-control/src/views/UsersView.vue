@@ -28,6 +28,21 @@
             </tr>
           </thead>
           <tbody>
+            <template v-if="loading">
+              <tr v-for="i in 5" :key="`sk-${i}`" class="border-b border-gray-50">
+                <td class="px-6 py-4"><SkeletonBlock width="150px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="170px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="90px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="80px" height="20px" rounded="999px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="80px" height="15px" /></td>
+                <td v-if="isAdmin" class="px-6 py-4 text-right">
+                  <div class="flex justify-end gap-3">
+                    <SkeletonBlock width="44px" height="15px" rounded="6px" />
+                    <SkeletonBlock width="58px" height="15px" rounded="6px" />
+                  </div>
+                </td>
+              </tr>
+            </template>
             <tr
               v-for="user in users"
               :key="user.id"
@@ -67,7 +82,6 @@
           </tbody>
         </table>
 
-        <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">Cargando...</div>
         <div v-if="!loading && users.length === 0" class="text-center py-10 text-gray-400 text-sm">
           No hay usuarios registrados
         </div>
@@ -124,12 +138,23 @@
                 <span v-if="!editTarget" class="text-red-500">*</span>
                 <span v-else class="text-gray-400 font-normal">(dejar vacío para no cambiar)</span>
               </label>
-              <input
-                v-model="form.password"
-                type="password"
-                placeholder="••••••••"
-                class="border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
-              />
+              <div class="relative">
+                <input
+                  v-model="form.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="••••••••"
+                  class="w-full border border-gray-200 rounded-xl px-4 py-2.5 pr-10 text-sm text-[#193B68] focus:outline-none focus:ring-2 focus:ring-[#1479FF] focus:border-transparent"
+                />
+                <button
+                  type="button"
+                  tabindex="-1"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  @click="showPassword = !showPassword"
+                >
+                  <svg v-if="showPassword" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>
+                  <svg v-else xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+              </div>
             </div>
 
             <div class="flex flex-col gap-1.5">
@@ -197,6 +222,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { useAuthStore } from '../stores/authStore'
 import { useToastStore } from '../stores/toastStore'
 import { getUsers, createUser, updateUser, deleteUser } from '../services/UsersService.js'
@@ -208,6 +234,7 @@ const isAdmin = computed(() => authStore.user?.role === 'admin')
 const users = ref([])
 const loading = ref(false)
 const showModal = ref(false)
+const showPassword = ref(false)
 const editTarget = ref(null)
 const deleteTarget = ref(null)
 const saving = ref(false)
@@ -232,6 +259,7 @@ const openCreate = () => {
   editTarget.value = null
   form.value = { full_name: '', email: '', dni: '', password: '', role: 'colaborador' }
   formError.value = ''
+  showPassword.value = false
   showModal.value = true
 }
 
@@ -239,6 +267,7 @@ const openEdit = (user) => {
   editTarget.value = user
   form.value = { full_name: user.full_name, email: user.email, dni: user.dni || '', password: '', role: user.role }
   formError.value = ''
+  showPassword.value = false
   showModal.value = true
 }
 
