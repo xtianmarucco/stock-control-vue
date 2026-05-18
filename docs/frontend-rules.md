@@ -38,11 +38,10 @@ src/
 - NO usar variables reactivas globales fuera de Pinia
 - Mantener los stores limpios y enfocados
 
-Stores esperados:
-- branchesStore
-- productsStore
-- stockMovementsStore
-- authStore (cuando se implemente autenticación)
+Stores activos:
+- authStore       → usuario autenticado, rol, login/logout
+- toastStore      → notificaciones globales (add, remove)
+- productStores   → catálogo de productos (listado, filtros)
 
 ---
 
@@ -139,9 +138,16 @@ Componentes base esperados:
 - No deben contener lógica pesada
 
 Vistas actuales:
-- DashboardView   → resumen de stock por sucursal
-- ProductsTableView → tabla de stock filtrable por categoría
-- StockMovementsView → listado y creación de movimientos
+- LoginView               → autenticación
+- DashboardView           → KPIs, gráficos donut, alertas de stock bajo
+- ProductsCatalogView     → catálogo maestro con drawer, filtros y paginación
+- ProductsTableView       → tabla de stock por sucursal y categoría
+- StockMovementsView      → historial de movimientos con filtros
+- NewStockMovementView    → formulario de creación de movimiento (página dedicada)
+- ReportsView             → reporte consolidado con exportación Excel/PDF
+- BranchesView            → CRUD de sucursales
+- UsersView               → CRUD de usuarios (solo admin)
+- ReasonCategoriesView    → CRUD de categorías de motivo
 
 ---
 

@@ -34,12 +34,19 @@ Todos los endpoints deben seguir estas reglas estrictamente.
 
 # 📍 Estructura de Endpoints
 
+## Auth
+
+POST   /auth/login             → iniciar sesión (body: email, password)
+POST   /auth/logout            → cerrar sesión
+GET    /auth/me                → obtener usuario autenticado actual
+
 ## Branches (Sucursales)
 
 GET    /branches               → listar todas las sucursales
 GET    /branches/:id           → detalle de una sucursal
-POST   /branches               → crear sucursal
-PUT    /branches/:id           → actualizar sucursal
+POST   /branches               → crear sucursal (requireAdmin)
+PUT    /branches/:id           → actualizar sucursal (requireAdmin)
+DELETE /branches/:id           → eliminar sucursal y todos sus datos (requireAdmin)
 
 ## Stock por sucursal
 
@@ -48,20 +55,34 @@ GET    /branches/:id/stock-summary-by-category    → resumen para gráfico donu
 
 ## Products (Productos)
 
-GET    /products               → listar todos los productos
+GET    /products               → listar productos (?category= ?showInactive=true)
+GET    /products/categories    → listar categorías únicas existentes
 GET    /products/:id           → detalle de un producto
-POST   /products               → crear producto
-PUT    /products/:id           → actualizar producto
+POST   /products               → crear producto (requireAdmin)
+PUT    /products/:id           → actualizar producto (requireAdmin)
+DELETE /products/:id           → soft delete — dar de baja (requireAdmin)
+PATCH  /products/:id/restore   → restaurar producto dado de baja (requireAdmin)
+DELETE /products/:id/permanent → eliminación definitiva, solo si is_available=false (requireAdmin)
 
 ## Stock Movements (Movimientos)
 
-GET    /stock-movements        → listar movimientos (con filtros)
+GET    /stock-movements        → listar movimientos paginados (con filtros)
 POST   /stock-movements        → crear movimiento (con sus items)
 GET    /stock-movements/:id    → detalle de un movimiento
 
 ## Reason Categories (Categorías de motivo)
 
 GET    /reason-categories      → listar categorías disponibles
+POST   /reason-categories      → crear categoría (requireAdmin)
+PUT    /reason-categories/:id  → actualizar categoría (requireAdmin)
+DELETE /reason-categories/:id  → eliminar categoría (requireAdmin)
+
+## Users (Usuarios)
+
+GET    /users                  → listar usuarios (requireAdmin)
+POST   /users                  → crear usuario (requireAdmin)
+PUT    /users/:id              → actualizar usuario (requireAdmin)
+DELETE /users/:id              → eliminar usuario (requireAdmin)
 
 ---
 
@@ -69,8 +90,9 @@ GET    /reason-categories      → listar categorías disponibles
 
 Filtros siempre van como query params, nunca en el body:
 
-/stock-movements?branch_id=1&type=TRANSFER&from=2026-01-01&to=2026-01-31
+/stock-movements?branch_id=1&type=TRANSFER&from=2026-01-01&to=2026-01-31&page=1&pageSize=30
 /branches/:id/stock?category=Sabores+al+Agua
+/products?category=Palitos&showInactive=true
 
 ---
 
@@ -152,6 +174,9 @@ Todos los errores deben seguir esta estructura:
 - NOT_FOUND          → recurso no encontrado
 - INSUFFICIENT_STOCK → stock insuficiente para el movimiento
 - UNAUTHORIZED       → usuario no autenticado
+- FORBIDDEN          → usuario autenticado sin permisos suficientes
+- CONFLICT           → violación de referencia entre registros (FK)
+- DUPLICATE          → valor único duplicado
 - INTERNAL_ERROR     → error interno del servidor
 
 ---
@@ -160,9 +185,11 @@ Todos los errores deben seguir esta estructura:
 
 - 200 → éxito general
 - 201 → recurso creado
-- 400 → error de validación
+- 400 → error de validación / stock insuficiente
 - 401 → no autenticado
+- 403 → sin permisos (autenticado pero no admin)
 - 404 → recurso no encontrado
+- 409 → conflicto de referencia (FK violation) o duplicado
 - 500 → error interno
 
 ---
