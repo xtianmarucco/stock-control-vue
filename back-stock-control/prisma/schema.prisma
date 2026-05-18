@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model branch_stock {
+  id         Int       @id(map: "stock_pkey") @default(autoincrement())
+  product_id Int?
+  branch_id  Int?
+  total      Int       @default(0)
+  updated_at DateTime? @default(now()) @db.Timestamp(6)
+  branch     branches? @relation(fields: [branch_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "stock_branch_id_fkey")
+  product    products? @relation(fields: [product_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([product_id, branch_id], map: "stock_product_id_branch_id_key")
+}
+
+model branches {
+  id            Int               @id @default(autoincrement())
+  name          String            @unique
+  address       String?
+  is_active     Boolean?          @default(true)
+  created_at    DateTime?         @default(now()) @db.Timestamp(6)
+  stock         branch_stock[]
+  fromMovements stock_movements[] @relation("fromBranch")
+  toMovements   stock_movements[] @relation("toBranch")
+}
+
+model products {
+  id              Int                    @id @default(autoincrement())
+  name            String
+  category_name   String
+  kg_pack         Decimal?               @db.Decimal(8, 3)
+  cajas_x_pack    Int?
+  kg_caja         Decimal?               @db.Decimal(8, 3)
+  unidades_x_caja Int?
+  unidades_x_pack Int?
+  kg_unidades     Decimal?               @db.Decimal(8, 3)
+  is_available    Boolean                @default(true)
+  created_at      DateTime               @default(now()) @db.Timestamp(6)
+  branch_stock    branch_stock[]
+  movementItems   stock_movement_items[]
+}
+
+model reason_categories {
+  id            Int               @id @default(autoincrement())
+  code          String            @unique @db.VarChar(50)
+  label         String            @db.VarChar(255)
+  movement_type String            @db.VarChar(20)
+  movements     stock_movements[]
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model stock_backup {
+  id            Int?
+  product_id    Int?
+  branch_id     Int?
+  big_chamber   Int?
+  small_chamber Int?
+  salon_freezer Int?
+  total         Int?
+  updated_at    DateTime? @db.Timestamp(6)
+
+  @@ignore
+}
+
+model stock_movement_items {
+  id          Int              @id @default(autoincrement())
+  movement_id Int?
+  product_id  Int?
+  quantity    Int
+  movement    stock_movements? @relation(fields: [movement_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  product     products?        @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model stock_movements {
+  id                 Int                    @id @default(autoincrement())
+  from_branch_id     Int?
+  to_branch_id       Int?
+  movement_type      String                 @db.VarChar(20)
+  reason             String?
+  created_at         DateTime?              @default(now()) @db.Timestamp(6)
+  reason_category_id Int?
+  user_id            Int?
+  items              stock_movement_items[]
+  fromBranch         branches?              @relation("fromBranch", fields: [from_branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  toBranch           branches?              @relation("toBranch", fields: [to_branch_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  reasonCategory     reason_categories?     @relation(fields: [reason_category_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  createdBy          users?                 @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model users {
+  id            Int               @id @default(autoincrement())
+  email         String            @unique @db.VarChar(255)
+  full_name     String            @db.VarChar(255)
+  dni           String            @db.VarChar(20)
+  password_hash String            @db.VarChar(255)
+  role          String            @default("colaborador") @db.VarChar(20)
+  created_at    DateTime?         @default(now()) @db.Timestamp(6)
+  movements     stock_movements[]
+}

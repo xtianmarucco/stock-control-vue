@@ -1,17 +1,15 @@
-// src/routes/products.routes.js
-const express = require('express');
-const router = express.Router();
-const pool = require('../db');
+const express = require('express')
+const router = express.Router()
+const { requireAdmin } = require('../middleware/auth')
+const { getAll, getCategories, getProductById, create, update, remove, restore, destroy } = require('../controllers/products.controller')
 
-// GET /api/products
-router.get('/', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM products ORDER BY name');
-    res.json(result.rows);
-  } catch (error) {
-    console.error('❌ Error fetching products:', error);
-    res.status(500).json({ error: 'Error fetching products' });
-  }
-});
+router.get('/', getAll)
+router.get('/categories', getCategories)
+router.get('/:id', getProductById)
+router.post('/', requireAdmin, create)
+router.put('/:id', requireAdmin, update)
+router.delete('/:id', requireAdmin, remove)
+router.patch('/:id/restore', requireAdmin, restore)
+router.delete('/:id/permanent', requireAdmin, destroy)
 
-module.exports = router;
+module.exports = router

@@ -1,8 +1,24 @@
-const express = require('express');
-const router = express.Router();
+const { Router } = require('express')
+const { requireAuth } = require('../middleware/auth')
 
-// Importar rutas reales acá
-const productsRoutes = require('./products.routes');
-router.use('/products', productsRoutes);
+const authRoutes = require('./auth.routes')
+const branchesRoutes = require('./branches.routes')
+const dashboardRoutes = require('./dashboard.routes')
+const productsRoutes = require('./products.routes')
+const reasonCategoriesRoutes = require('./reasonCategories.routes')
+const reportsRoutes = require('./reports.routes')
+const stockMovementsRoutes = require('./stockMovements.routes')
+const usersRoutes = require('./users.routes')
 
-module.exports = router;
+const router = Router()
+
+router.use('/auth', authRoutes)
+router.use('/branches', requireAuth, branchesRoutes)
+router.use('/dashboard', requireAuth, dashboardRoutes)
+router.use('/products', requireAuth, productsRoutes)
+router.use('/reason-categories', requireAuth, reasonCategoriesRoutes)
+router.use('/reports', requireAuth, reportsRoutes)
+router.use('/stock-movements', requireAuth, stockMovementsRoutes)
+router.use('/users', requireAuth, usersRoutes)
+
+module.exports = router
