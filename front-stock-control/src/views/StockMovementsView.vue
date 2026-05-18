@@ -93,6 +93,16 @@
           </tr>
         </thead>
         <tbody>
+          <template v-if="loading">
+            <tr v-for="i in 5" :key="`sk-${i}`" class="border-b border-gray-50">
+              <td class="px-6 py-4"><SkeletonBlock width="80px" height="15px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="70px" height="20px" rounded="999px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="130px" height="15px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="110px" height="15px" /></td>
+              <td class="px-6 py-4"><SkeletonBlock width="120px" height="15px" /></td>
+              <td class="px-6 py-4 text-right"><SkeletonBlock width="24px" height="15px" rounded="6px" style="margin-left: auto" /></td>
+            </tr>
+          </template>
           <tr
             v-for="mov in paginatedMovements"
             :key="mov.id"
@@ -113,9 +123,6 @@
 
       <div v-if="!loading && movements.length === 0" class="text-center py-10 text-gray-400 text-sm">
         No se encontraron movimientos
-      </div>
-      <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">
-        Cargando...
       </div>
 
       <div
@@ -160,6 +167,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import MovementDetailModal from '../components/movement-detail-modal/MovementDetailModal.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { getStockMovements } from '../services/MovementsService.js'
 import { getBranches } from '../services/BranchService.js'
 import { useAuthStore } from '../stores/authStore'

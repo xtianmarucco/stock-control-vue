@@ -147,8 +147,21 @@
           <!-- Lista -->
           <section class="rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
 
-            <div v-if="loading" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center text-sm text-[var(--color-text-muted)]">
-              Cargando catálogo...
+            <div v-if="loading" class="overflow-hidden rounded-[28px] border border-[var(--color-border)]">
+              <div class="hidden grid-cols-[minmax(0,1.8fr)_minmax(160px,0.8fr)_140px_56px] border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4 md:grid">
+                <SkeletonBlock width="70px" height="11px" rounded="4px" />
+              </div>
+              <div class="divide-y divide-[var(--color-border)]">
+                <div v-for="i in 6" :key="i" class="flex items-center gap-4 px-5 py-4">
+                  <div class="flex-1">
+                    <SkeletonBlock :width="`${120 + i * 14}px`" height="14px" rounded="4px" class="mb-2" />
+                    <SkeletonBlock width="100px" height="11px" rounded="4px" />
+                  </div>
+                  <SkeletonBlock width="90px" height="11px" rounded="4px" />
+                  <SkeletonBlock width="80px" height="22px" rounded="8px" />
+                  <SkeletonBlock width="32px" height="32px" rounded="10px" />
+                </div>
+              </div>
             </div>
 
             <div v-else-if="filteredProducts.length === 0" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center">
@@ -245,6 +258,7 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import ProductDrawer from '../components/product-drawer/ProductDrawer.vue'
 import ProductFormModal from '../components/product-form-modal/ProductFormModal.vue'
 import { getAllProducts, getProductCategories } from '../services/ProductService.js'

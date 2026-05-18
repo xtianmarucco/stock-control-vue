@@ -26,6 +26,19 @@
             </tr>
           </thead>
           <tbody>
+            <template v-if="loading">
+              <tr v-for="i in 5" :key="`sk-${i}`" class="border-b border-gray-50">
+                <td class="px-6 py-4"><SkeletonBlock width="160px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="130px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="62px" height="20px" rounded="999px" /></td>
+                <td v-if="isAdmin" class="px-6 py-4 text-right">
+                  <div class="flex justify-end gap-3">
+                    <SkeletonBlock width="44px" height="15px" rounded="6px" />
+                    <SkeletonBlock width="58px" height="15px" rounded="6px" />
+                  </div>
+                </td>
+              </tr>
+            </template>
             <tr
               v-for="branch in branches"
               :key="branch.id"
@@ -54,8 +67,6 @@
             </tr>
           </tbody>
         </table>
-
-        <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">Cargando...</div>
         <div v-if="!loading && branches.length === 0" class="text-center py-10 text-gray-400 text-sm">
           No hay sucursales registradas
         </div>
@@ -145,6 +156,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { useAuthStore } from '../stores/authStore'
 import { useToastStore } from '../stores/toastStore'
 import { getBranches, createBranch, updateBranch, deleteBranch } from '../services/BranchService.js'

@@ -28,6 +28,21 @@
             </tr>
           </thead>
           <tbody>
+            <template v-if="loading">
+              <tr v-for="i in 5" :key="`sk-${i}`" class="border-b border-gray-50">
+                <td class="px-6 py-4"><SkeletonBlock width="150px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="170px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="90px" height="15px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="80px" height="20px" rounded="999px" /></td>
+                <td class="px-6 py-4"><SkeletonBlock width="80px" height="15px" /></td>
+                <td v-if="isAdmin" class="px-6 py-4 text-right">
+                  <div class="flex justify-end gap-3">
+                    <SkeletonBlock width="44px" height="15px" rounded="6px" />
+                    <SkeletonBlock width="58px" height="15px" rounded="6px" />
+                  </div>
+                </td>
+              </tr>
+            </template>
             <tr
               v-for="user in users"
               :key="user.id"
@@ -67,7 +82,6 @@
           </tbody>
         </table>
 
-        <div v-if="loading" class="text-center py-10 text-gray-300 text-sm">Cargando...</div>
         <div v-if="!loading && users.length === 0" class="text-center py-10 text-gray-400 text-sm">
           No hay usuarios registrados
         </div>
@@ -208,6 +222,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { useAuthStore } from '../stores/authStore'
 import { useToastStore } from '../stores/toastStore'
 import { getUsers, createUser, updateUser, deleteUser } from '../services/UsersService.js'

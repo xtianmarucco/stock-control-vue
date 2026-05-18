@@ -25,11 +25,40 @@
       </header>
 
       <div class="flex-1 overflow-y-auto px-6 py-6 sm:px-8">
-        <div
-          v-if="loading"
-          class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-10 text-center text-sm text-[var(--color-text-muted)]"
-        >
-          Cargando detalle del movimiento...
+        <div v-if="loading" class="space-y-6">
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div v-for="i in 4" :key="i" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+              <SkeletonBlock width="60px" height="10px" rounded="4px" class="mb-3" />
+              <SkeletonBlock :width="`${80 + i * 12}px`" height="22px" rounded="6px" />
+            </div>
+          </div>
+          <div class="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+            <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+              <SkeletonBlock width="60px" height="10px" rounded="4px" class="mb-3" />
+              <SkeletonBlock width="140px" height="18px" rounded="6px" class="mb-2" />
+              <SkeletonBlock width="200px" height="14px" rounded="4px" />
+            </div>
+            <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+              <SkeletonBlock width="80px" height="10px" rounded="4px" class="mb-3" />
+              <SkeletonBlock width="120px" height="18px" rounded="6px" class="mb-4" />
+              <SkeletonBlock width="60px" height="10px" rounded="4px" class="mb-2" />
+              <SkeletonBlock width="40px" height="28px" rounded="6px" />
+            </div>
+          </div>
+          <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
+            <div class="mb-4 flex items-center justify-between">
+              <SkeletonBlock width="170px" height="20px" rounded="6px" />
+              <SkeletonBlock width="52px" height="24px" rounded="999px" />
+            </div>
+            <div class="overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-white">
+              <div class="border-b border-[var(--color-border)] px-4 py-3">
+                <SkeletonBlock width="100%" height="12px" rounded="4px" />
+              </div>
+              <div v-for="i in 4" :key="i" class="border-b border-[var(--color-border)] px-4 py-3 last:border-0">
+                <SkeletonBlock :width="`${60 + i * 8}%`" height="14px" rounded="4px" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <div
@@ -148,6 +177,7 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { getStockMovementById } from '../../services/MovementsService.js'
+import SkeletonBlock from '../ui/SkeletonBlock.vue'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },

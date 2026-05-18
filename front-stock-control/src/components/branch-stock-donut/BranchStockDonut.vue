@@ -5,7 +5,15 @@
       <p class="text-xs text-gray-400 mt-0.5">Stock por categoría</p>
     </div>
     <div class="p-4 flex items-center justify-center min-h-[220px]">
-      <p v-if="loading" class="text-gray-300 text-sm">Cargando...</p>
+      <div v-if="loading" class="flex flex-col items-center gap-4 w-full">
+        <SkeletonBlock width="150px" height="150px" rounded="50%" />
+        <div class="flex flex-col gap-2 w-full px-4">
+          <div v-for="i in 4" :key="i" class="flex items-center gap-2">
+            <SkeletonBlock width="12px" height="12px" rounded="3px" />
+            <SkeletonBlock :width="`${50 + i * 18}px`" height="11px" rounded="4px" />
+          </div>
+        </div>
+      </div>
       <p v-else-if="error" class="text-gray-400 text-sm text-center">{{ error }}</p>
       <Doughnut v-else :data="chartData" :options="chartOptions" class="max-h-52" />
     </div>
@@ -15,6 +23,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { Doughnut } from 'vue-chartjs'
+import SkeletonBlock from '../ui/SkeletonBlock.vue'
 import { Chart as ChartJS, Title, Tooltip, Legend, ArcElement, CategoryScale } from 'chart.js'
 import { getStockSummaryByCategory } from '../../services/stockService'
 

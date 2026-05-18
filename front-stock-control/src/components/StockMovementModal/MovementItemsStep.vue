@@ -13,9 +13,17 @@
       <!-- Cargando -->
       <div
         v-if="loadingProducts"
-        class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] py-10 text-center text-sm text-[var(--color-text-muted)]"
+        class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] p-4 space-y-2"
       >
-        Cargando stock disponible...
+        <div v-for="i in 4" :key="i" class="rounded-[20px] border border-[var(--color-border)] bg-white px-4 py-3">
+          <div class="flex items-center justify-between gap-3">
+            <div class="flex-1">
+              <SkeletonBlock :width="`${110 + i * 14}px`" height="14px" rounded="4px" class="mb-2" />
+              <SkeletonBlock width="100px" height="11px" rounded="4px" />
+            </div>
+            <SkeletonBlock width="28px" height="28px" rounded="10px" />
+          </div>
+        </div>
       </div>
 
       <!-- Sin productos -->
@@ -203,6 +211,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue'
+import SkeletonBlock from '../ui/SkeletonBlock.vue'
 
 const props = defineProps({
   items: Array,

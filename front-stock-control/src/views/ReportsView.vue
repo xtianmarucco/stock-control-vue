@@ -83,8 +83,20 @@
     <!-- Tabla -->
     <section class="rounded-[32px] border border-[var(--color-border)] bg-white p-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)]">
 
-      <div v-if="loading" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center text-sm text-[var(--color-text-muted)]">
-        Cargando reporte...
+      <div v-if="loading" class="overflow-hidden rounded-[28px] border border-[var(--color-border)]">
+        <div class="border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4">
+          <SkeletonBlock width="120px" height="11px" rounded="4px" />
+        </div>
+        <div class="divide-y divide-[var(--color-border)]">
+          <div v-for="i in 6" :key="i" class="flex items-center gap-4 px-5 py-4">
+            <div class="flex-1">
+              <SkeletonBlock :width="`${110 + i * 16}px`" height="14px" rounded="4px" class="mb-2" />
+              <SkeletonBlock width="90px" height="11px" rounded="4px" />
+            </div>
+            <SkeletonBlock width="60px" height="14px" rounded="4px" />
+            <SkeletonBlock width="60px" height="14px" rounded="4px" />
+          </div>
+        </div>
       </div>
 
       <div v-else-if="!products.length" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center">
@@ -193,6 +205,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import { getStockReport } from '../services/ReportsService.js'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'

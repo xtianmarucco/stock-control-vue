@@ -10,7 +10,8 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock total</p>
-            <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.total_stock }}</p>
+            <SkeletonBlock v-if="loading" width="64px" height="30px" rounded="6px" class="my-0.5" />
+            <p v-else class="text-2xl font-bold text-[#193B68]">{{ summary.total_stock }}</p>
             <p class="text-xs text-gray-400">bultos en sistema</p>
           </div>
         </div>
@@ -21,7 +22,8 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Stock bajo</p>
-            <p class="text-2xl font-bold text-orange-500">{{ loading ? '—' : summary.low_stock_count }}</p>
+            <SkeletonBlock v-if="loading" width="48px" height="30px" rounded="6px" class="my-0.5" />
+            <p v-else class="text-2xl font-bold text-orange-500">{{ summary.low_stock_count }}</p>
             <p class="text-xs text-gray-400">productos con stock bajo</p>
           </div>
         </div>
@@ -32,7 +34,8 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Movimientos</p>
-            <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.movements_last_7_days }}</p>
+            <SkeletonBlock v-if="loading" width="48px" height="30px" rounded="6px" class="my-0.5" />
+            <p v-else class="text-2xl font-bold text-[#193B68]">{{ summary.movements_last_7_days }}</p>
             <p class="text-xs text-gray-400">últimos 7 días</p>
           </div>
         </div>
@@ -43,7 +46,8 @@
           </div>
           <div>
             <p class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Sucursales</p>
-            <p class="text-2xl font-bold text-[#193B68]">{{ loading ? '—' : summary.active_branches_count }}</p>
+            <SkeletonBlock v-if="loading" width="40px" height="30px" rounded="6px" class="my-0.5" />
+            <p v-else class="text-2xl font-bold text-[#193B68]">{{ summary.active_branches_count }}</p>
             <p class="text-xs text-gray-400">activas</p>
           </div>
         </div>
@@ -70,7 +74,21 @@
           <div class="px-6 py-4 border-b border-gray-100">
             <h2 class="text-sm font-bold text-[#193B68]">Últimos movimientos</h2>
           </div>
-          <div v-if="loading" class="px-6 py-8 text-center text-gray-300 text-sm">Cargando...</div>
+          <ul v-if="loading" class="divide-y divide-gray-50">
+            <li v-for="i in 4" :key="i" class="px-6 py-3 flex items-center justify-between gap-3">
+              <div class="flex items-center gap-3">
+                <SkeletonBlock width="60px" height="20px" rounded="999px" />
+                <div>
+                  <SkeletonBlock :width="`${100 + i * 12}px`" height="13px" rounded="4px" class="mb-1.5" />
+                  <SkeletonBlock width="80px" height="11px" rounded="4px" />
+                </div>
+              </div>
+              <div class="text-right">
+                <SkeletonBlock width="50px" height="13px" rounded="4px" class="mb-1.5" />
+                <SkeletonBlock width="40px" height="11px" rounded="4px" />
+              </div>
+            </li>
+          </ul>
           <div v-else-if="recentMovements.length === 0" class="px-6 py-8 text-center text-gray-400 text-sm">Sin movimientos</div>
           <ul v-else class="divide-y divide-gray-50">
             <li
@@ -104,7 +122,15 @@
               {{ lowStockProducts.length }}
             </span>
           </div>
-          <div v-if="loading" class="px-6 py-8 text-center text-gray-300 text-sm">Cargando...</div>
+          <ul v-if="loading" class="divide-y divide-gray-50">
+            <li v-for="i in 4" :key="i" class="px-6 py-3 flex items-center justify-between gap-3">
+              <div>
+                <SkeletonBlock :width="`${120 + i * 10}px`" height="13px" rounded="4px" class="mb-1.5" />
+                <SkeletonBlock width="100px" height="11px" rounded="4px" />
+              </div>
+              <SkeletonBlock width="56px" height="20px" rounded="999px" />
+            </li>
+          </ul>
           <div v-else-if="lowStockProducts.length === 0" class="px-6 py-8 text-center text-gray-400 text-sm">Sin alertas</div>
           <ul v-else class="divide-y divide-gray-50 max-h-72 overflow-y-auto">
             <li
@@ -134,6 +160,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import DashboardLayout from '../layouts/DashboardLayout.vue'
+import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
 import BranchStockDonut from '../components/branch-stock-donut/BranchStockDonut.vue'
 import StockCategoryChart from '../components/stock-category-chart/StockCategoryChart.vue'
 import { getDashboardData } from '../services/DashboardService'
