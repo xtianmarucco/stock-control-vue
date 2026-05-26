@@ -9,18 +9,18 @@
           <p class="text-sm font-medium text-[var(--color-primary)]">Exportar datos</p>
           <h1 class="mt-1 text-3xl font-bold text-[var(--color-text-base)]">Reportes de stock</h1>
           <p class="mt-2 text-sm text-[var(--color-text-muted)]">
-            Filtrá por categoría y exportá el inventario consolidado en Excel o PDF.
+            Filtrá por categoría, sucursal o nombre y exportá el inventario consolidado en Excel o PDF.
           </p>
         </div>
 
         <div class="grid gap-3 sm:grid-cols-2 xl:min-w-[280px]">
           <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Productos</p>
-            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ products.length }}</p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ filteredProducts.length }}</p>
           </div>
           <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Total global</p>
-            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ grandTotal }} <span class="text-base font-normal text-[var(--color-text-muted)]">bts</span></p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ grandTotal }} <span class="text-base font-normal text-[var(--color-text-muted)]">uds</span></p>
           </div>
         </div>
       </div>
@@ -29,35 +29,50 @@
     <!-- Filtros + exportar -->
     <section class="rounded-[32px] border border-[var(--color-border)] bg-white px-6 py-5 shadow-[0_24px_50px_rgba(15,35,64,0.08)] sm:px-8">
       <div class="flex flex-wrap items-end gap-4">
+
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Buscar producto</label>
+          <input
+            v-model="searchName"
+            type="text"
+            placeholder="Nombre del producto..."
+            class="min-w-[220px] rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+          />
+        </div>
+
         <div class="flex flex-col gap-2">
           <label class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Categoría</label>
           <select
             v-model="filters.category"
-            class="min-w-[220px] rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+            @change="fetchReport"
+            class="min-w-[200px] rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
           >
             <option value="">Todas las categorías</option>
             <option v-for="cat in categories" :key="cat" :value="cat">{{ cat }}</option>
           </select>
         </div>
 
-        <div class="flex gap-2">
-          <button
-            class="rounded-2xl bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(20,121,255,0.22)] transition hover:bg-[var(--color-primary-hover)]"
-            @click="fetchReport"
+        <div class="flex flex-col gap-2">
+          <label class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Sucursal</label>
+          <select
+            v-model="selectedBranch"
+            class="min-w-[180px] rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
           >
-            Filtrar
-          </button>
-          <button
-            class="rounded-2xl border border-[var(--color-border)] px-5 py-3 text-sm font-semibold text-[var(--color-text-base)] transition hover:bg-[#F7FAFF]"
-            @click="clearFilters"
-          >
-            Limpiar
-          </button>
+            <option value="">Todas las sucursales</option>
+            <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
+          </select>
         </div>
 
-        <div class="ml-auto flex gap-2">
+        <button
+          class="self-end rounded-2xl border border-[var(--color-border)] px-5 py-3 text-sm font-semibold text-[var(--color-text-base)] transition hover:bg-[#F7FAFF]"
+          @click="clearFilters"
+        >
+          Limpiar
+        </button>
+
+        <div class="ml-auto flex gap-2 self-end">
           <button
-            :disabled="!products.length"
+            :disabled="!filteredProducts.length"
             class="flex items-center gap-2 rounded-2xl border border-[#16A34A] px-4 py-3 text-sm font-semibold text-[#16A34A] transition hover:bg-[#F0FDF4] disabled:cursor-not-allowed disabled:opacity-40"
             @click="exportExcel"
           >
@@ -67,7 +82,7 @@
             Excel
           </button>
           <button
-            :disabled="!products.length"
+            :disabled="!filteredProducts.length"
             class="flex items-center gap-2 rounded-2xl border border-[#DC2626] px-4 py-3 text-sm font-semibold text-[#DC2626] transition hover:bg-[#FEF2F2] disabled:cursor-not-allowed disabled:opacity-40"
             @click="exportPdf"
           >
@@ -99,22 +114,30 @@
         </div>
       </div>
 
-      <div v-else-if="!products.length" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center">
-        <p class="text-base font-semibold text-[var(--color-text-base)]">Sin datos para mostrar</p>
-        <p class="mt-1 text-sm text-[var(--color-text-muted)]">Probá cambiando el filtro de categoría.</p>
+      <div v-else-if="!filteredProducts.length" class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] px-5 py-12 text-center">
+        <p class="text-base font-semibold text-[var(--color-text-base)]">Sin resultados</p>
+        <p class="mt-1 text-sm text-[var(--color-text-muted)]">
+          {{ products.length ? 'Ningún producto coincide con los filtros aplicados.' : 'Probá cambiando el filtro de categoría.' }}
+        </p>
       </div>
 
       <div v-else class="overflow-hidden rounded-[28px] border border-[var(--color-border)]">
         <!-- Sub-header -->
-        <div class="flex items-center gap-3 border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4">
+        <div class="flex flex-wrap items-center gap-3 border-b border-[var(--color-border)] bg-[#F8FAFD] px-5 py-4">
           <span
             class="inline-flex rounded-full px-3 py-1 text-xs font-semibold"
             :class="filters.category ? 'bg-[#EAF2FF] text-[var(--color-primary)]' : 'bg-[#EEF3FA] text-[var(--color-text-muted)]'"
           >
             {{ filters.category || 'Todas las categorías' }}
           </span>
+          <span
+            v-if="selectedBranch"
+            class="inline-flex rounded-full bg-[#EAF2FF] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]"
+          >
+            {{ visibleBranches[0]?.name }}
+          </span>
           <span class="text-sm text-[var(--color-text-muted)]">
-            {{ products.length }} productos
+            {{ filteredProducts.length }} productos
           </span>
         </div>
 
@@ -125,21 +148,21 @@
                 <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] whitespace-nowrap">Producto</th>
                 <th class="px-5 py-3 text-left text-xs font-semibold uppercase tracking-[0.16em] whitespace-nowrap">Categoría</th>
                 <th
-                  v-for="branch in branches"
+                  v-for="branch in visibleBranches"
                   :key="branch.id"
                   class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] whitespace-nowrap"
                 >
                   {{ branch.name }}
                 </th>
                 <th class="px-5 py-3 text-right text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-base)] whitespace-nowrap">
-                  Total (bultos)
+                  Total
                 </th>
               </tr>
             </thead>
 
             <tbody class="divide-y divide-[var(--color-border)]">
               <tr
-                v-for="product in products"
+                v-for="product in filteredProducts"
                 :key="product.product_id"
                 class="transition hover:bg-[#F0F6FF]"
               >
@@ -152,7 +175,7 @@
                   </span>
                 </td>
                 <td
-                  v-for="branch in branches"
+                  v-for="branch in visibleBranches"
                   :key="branch.id"
                   class="px-5 py-3.5 text-right whitespace-nowrap font-medium"
                   :class="(product.stock[branch.id] ?? 0) === 0
@@ -161,15 +184,10 @@
                       ? 'text-[#DC2626]'
                       : 'text-[var(--color-text-base)]'"
                 >
-                  {{ product.stock[branch.id] ?? 0 }}
-                  <span
-                    v-if="(product.stock[branch.id] ?? 0) > 0"
-                    class="text-xs font-normal text-[var(--color-text-muted)]"
-                  >bts</span>
+                  {{ stockText(product.stock[branch.id] ?? 0, product.unidades_x_pack, product.unidades_x_caja) }}
                 </td>
                 <td class="px-5 py-3.5 text-right font-bold text-[var(--color-text-base)] whitespace-nowrap">
-                  {{ product.total }}
-                  <span class="text-xs font-normal text-[var(--color-text-muted)]">bts</span>
+                  {{ stockText(rowTotal(product), product.unidades_x_pack, product.unidades_x_caja) }}
                 </td>
               </tr>
             </tbody>
@@ -180,16 +198,16 @@
                   Totales
                 </td>
                 <td
-                  v-for="branch in branches"
+                  v-for="branch in visibleBranches"
                   :key="branch.id"
                   class="px-5 py-4 text-right font-bold text-[var(--color-text-base)]"
                 >
                   {{ branchTotal(branch.id) }}
-                  <span class="text-xs font-normal text-[var(--color-text-muted)]">bts</span>
+                  <span class="text-xs font-normal text-[var(--color-text-muted)]">uds</span>
                 </td>
                 <td class="px-5 py-4 text-right font-bold text-[var(--color-primary)]">
                   {{ grandTotal }}
-                  <span class="text-xs font-normal text-[var(--color-primary)]">bts</span>
+                  <span class="text-xs font-normal text-[var(--color-primary)]">uds</span>
                 </td>
               </tr>
             </tfoot>
@@ -216,12 +234,29 @@ const branches = ref([])
 const categories = ref([])
 const loading = ref(false)
 const filters = ref({ category: '' })
+const searchName = ref('')
+const selectedBranch = ref('')
+
+const filteredProducts = computed(() => {
+  if (!searchName.value.trim()) return products.value
+  const q = searchName.value.toLowerCase().trim()
+  return products.value.filter(p => p.product_name.toLowerCase().includes(q))
+})
+
+const visibleBranches = computed(() =>
+  selectedBranch.value
+    ? branches.value.filter(b => b.id === Number(selectedBranch.value))
+    : branches.value
+)
+
+const rowTotal = (product) =>
+  visibleBranches.value.reduce((sum, b) => sum + (product.stock[b.id] ?? 0), 0)
 
 const branchTotal = (branchId) =>
-  products.value.reduce((sum, p) => sum + (p.stock[branchId] ?? 0), 0)
+  filteredProducts.value.reduce((sum, p) => sum + (p.stock[branchId] ?? 0), 0)
 
 const grandTotal = computed(() =>
-  products.value.reduce((sum, p) => sum + p.total, 0)
+  filteredProducts.value.reduce((sum, p) => sum + rowTotal(p), 0)
 )
 
 const fetchReport = async () => {
@@ -240,22 +275,51 @@ const fetchReport = async () => {
 }
 
 const clearFilters = () => {
-  filters.value = { category: '' }
-  fetchReport()
+  searchName.value = ''
+  selectedBranch.value = ''
+  if (filters.value.category) {
+    filters.value.category = ''
+    fetchReport()
+  }
+}
+
+const stockText = (total, uxp, uxc) => {
+  const parts = []
+  if (uxp) {
+    const bultos = Math.floor(total / uxp)
+    const resto = total % uxp
+    if (bultos > 0) parts.push(`${bultos} ${bultos === 1 ? 'bulto' : 'bultos'}`)
+    if (uxc) {
+      const cajas = Math.floor(resto / uxc)
+      const unidades = resto % uxc
+      if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
+      if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+    } else if (resto > 0) {
+      parts.push(`${resto} ${resto === 1 ? 'unidad' : 'unidades'}`)
+    }
+  } else if (uxc) {
+    const cajas = Math.floor(total / uxc)
+    const unidades = total % uxc
+    if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
+    if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+  } else {
+    parts.push(`${total} ${total === 1 ? 'unidad' : 'unidades'}`)
+  }
+  return parts.length ? parts.join(' · ') : '0 unidades'
 }
 
 const buildTableData = () => {
-  const headers = ['Producto', 'Categoría', ...branches.value.map(b => b.name), 'Total']
-  const rows = products.value.map(p => [
+  const headers = ['Producto', 'Categoría', ...visibleBranches.value.map(b => b.name), 'Total']
+  const rows = filteredProducts.value.map(p => [
     p.product_name,
     p.category_name,
-    ...branches.value.map(b => p.stock[b.id] ?? 0),
-    p.total
+    ...visibleBranches.value.map(b => stockText(p.stock[b.id] ?? 0, p.unidades_x_pack, p.unidades_x_caja)),
+    stockText(rowTotal(p), p.unidades_x_pack, p.unidades_x_caja)
   ])
   const totals = [
     'TOTALES', '',
-    ...branches.value.map(b => branchTotal(b.id)),
-    grandTotal.value
+    ...visibleBranches.value.map(b => `${branchTotal(b.id)} uds`),
+    `${grandTotal.value} uds`
   ]
   return { headers, rows, totals }
 }
@@ -265,12 +329,10 @@ const exportExcel = () => {
   const wsData = [headers, ...rows, totals]
   const ws = XLSX.utils.aoa_to_sheet(wsData)
 
-  // Column widths
   ws['!cols'] = headers.map((h, i) => ({
-    wch: i === 0 ? 30 : i === 1 ? 24 : 14
+    wch: i === 0 ? 30 : i === 1 ? 24 : 28
   }))
 
-  // Bold header row
   const range = XLSX.utils.decode_range(ws['!ref'])
   for (let c = range.s.c; c <= range.e.c; c++) {
     const headerCell = XLSX.utils.encode_cell({ r: 0, c })

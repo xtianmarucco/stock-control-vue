@@ -12,7 +12,7 @@ const getStockReport = async ({ category } = {}) => {
       p.unidades_x_caja,
       b.id            AS branch_id,
       b.name          AS branch_name,
-      FLOOR(COALESCE(bs.total, 0)::float / COALESCE(p.unidades_x_pack, 1)) AS pack_total
+      COALESCE(bs.total, 0) AS raw_total
     FROM products p
     CROSS JOIN branches b
     LEFT JOIN branch_stock bs ON bs.product_id = p.id AND bs.branch_id = b.id
@@ -29,7 +29,7 @@ const getStockReport = async ({ category } = {}) => {
     unidades_x_caja: r.unidades_x_caja != null ? Number(r.unidades_x_caja) : null,
     branch_id: Number(r.branch_id),
     branch_name: r.branch_name,
-    pack_total: Number(r.pack_total)
+    raw_total: Number(r.raw_total)
   }))
 }
 

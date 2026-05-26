@@ -26,7 +26,7 @@ const getStockReport = async (filters) => {
         stock: {}
       })
     }
-    productMap.get(r.product_id).stock[r.branch_id] = r.pack_total
+    productMap.get(r.product_id).stock[r.branch_id] = r.raw_total
   }
 
   const products = [...productMap.values()].map(p => ({
