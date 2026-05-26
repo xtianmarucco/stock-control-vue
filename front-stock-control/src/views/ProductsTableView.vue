@@ -166,18 +166,16 @@
 
                 <div class="flex items-center justify-between md:flex-col md:items-end md:gap-1">
                   <span class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)] md:hidden">Stock</span>
-                  <span
-                    class="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-sm font-semibold"
-                    :class="prod.low_stock ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#DCFCE7] text-[#16A34A]'"
-                  >
-                    {{ prod.pack_total ?? prod.total }} bultos
-                  </span>
-                  <span
-                    v-if="prod.unidades_x_caja && prod.total"
-                    class="text-xs text-[var(--color-text-muted)]"
-                  >
-                    = {{ Math.floor(prod.total / prod.unidades_x_caja) }} cajas
-                  </span>
+                  <div class="flex flex-wrap justify-end gap-1">
+                    <span
+                      v-for="part in stockParts(prod)"
+                      :key="part"
+                      class="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-sm font-semibold"
+                      :class="prod.low_stock ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#DCFCE7] text-[#16A34A]'"
+                    >
+                      {{ part }}
+                    </span>
+                  </div>
                 </div>
               </article>
             </div>
@@ -251,6 +249,36 @@ const loading = ref(false)
 const currentPage = ref(1)
 const pageSize = ref(25)
 const pageSizeOptions = [10, 25, 50, 100]
+
+const stockParts = (prod) => {
+  const total = prod.total ?? 0
+  const uxp = prod.unidades_x_pack
+  const uxc = prod.unidades_x_caja
+  const parts = []
+
+  if (uxp) {
+    const bultos = Math.floor(total / uxp)
+    const resto = total % uxp
+    if (bultos > 0) parts.push(`${bultos} ${bultos === 1 ? 'bulto' : 'bultos'}`)
+    if (uxc) {
+      const cajas = Math.floor(resto / uxc)
+      const unidades = resto % uxc
+      if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
+      if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+    } else if (resto > 0) {
+      parts.push(`${resto} ${resto === 1 ? 'unidad' : 'unidades'}`)
+    }
+  } else if (uxc) {
+    const cajas = Math.floor(total / uxc)
+    const unidades = total % uxc
+    if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
+    if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+  } else {
+    parts.push(`${total} ${total === 1 ? 'unidad' : 'unidades'}`)
+  }
+
+  return parts.length ? parts : ['0 unidades']
+}
 
 const filteredProducts = computed(() => {
   if (!searchTerm.value) return products.value
