@@ -10,6 +10,8 @@ const getStockReport = async ({ category } = {}) => {
       p.category_name,
       p.unidades_x_pack,
       p.unidades_x_caja,
+      p.nivel2_label,
+      p.unidad_label,
       b.id            AS branch_id,
       b.name          AS branch_name,
       COALESCE(bs.total, 0) AS raw_total
@@ -27,6 +29,8 @@ const getStockReport = async ({ category } = {}) => {
     category_name: r.category_name,
     unidades_x_pack: r.unidades_x_pack != null ? Number(r.unidades_x_pack) : null,
     unidades_x_caja: r.unidades_x_caja != null ? Number(r.unidades_x_caja) : null,
+    nivel2_label: r.nivel2_label ?? null,
+    unidad_label: r.unidad_label ?? null,
     branch_id: Number(r.branch_id),
     branch_name: r.branch_name,
     raw_total: Number(r.raw_total)

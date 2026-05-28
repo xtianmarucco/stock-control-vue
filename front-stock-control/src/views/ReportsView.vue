@@ -184,10 +184,10 @@
                       ? 'text-[#DC2626]'
                       : 'text-[var(--color-text-base)]'"
                 >
-                  {{ stockText(product.stock[branch.id] ?? 0, product.unidades_x_pack, product.unidades_x_caja) }}
+                  {{ stockText(product.stock[branch.id] ?? 0, product.unidades_x_pack, product.unidades_x_caja, product.nivel2_label, product.unidad_label) }}
                 </td>
                 <td class="px-5 py-3.5 text-right font-bold text-[var(--color-text-base)] whitespace-nowrap">
-                  {{ stockText(rowTotal(product), product.unidades_x_pack, product.unidades_x_caja) }}
+                  {{ stockText(rowTotal(product), product.unidades_x_pack, product.unidades_x_caja, product.nivel2_label, product.unidad_label) }}
                 </td>
               </tr>
             </tbody>
@@ -283,29 +283,37 @@ const clearFilters = () => {
   }
 }
 
-const stockText = (total, uxp, uxc) => {
+const pluralize = (word, count) => {
+  if (count === 1) return word
+  const last = word.slice(-1).toLowerCase()
+  return 'aeiouáéíóú'.includes(last) ? word + 's' : word + 'es'
+}
+
+const stockText = (total, uxp, uxc, n2label, ulabel) => {
+  const n2 = n2label || 'caja'
+  const ul = ulabel || 'unidad'
   const parts = []
   if (uxp) {
     const bultos = Math.floor(total / uxp)
     const resto = total % uxp
-    if (bultos > 0) parts.push(`${bultos} ${bultos === 1 ? 'bulto' : 'bultos'}`)
+    if (bultos > 0) parts.push(`${bultos} ${pluralize('bulto', bultos)}`)
     if (uxc) {
       const cajas = Math.floor(resto / uxc)
       const unidades = resto % uxc
-      if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
-      if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+      if (cajas > 0) parts.push(`${cajas} ${pluralize(n2, cajas)}`)
+      if (unidades > 0) parts.push(`${unidades} ${pluralize(ul, unidades)}`)
     } else if (resto > 0) {
-      parts.push(`${resto} ${resto === 1 ? 'unidad' : 'unidades'}`)
+      parts.push(`${resto} ${pluralize(ul, resto)}`)
     }
   } else if (uxc) {
     const cajas = Math.floor(total / uxc)
     const unidades = total % uxc
-    if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
-    if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+    if (cajas > 0) parts.push(`${cajas} ${pluralize(n2, cajas)}`)
+    if (unidades > 0) parts.push(`${unidades} ${pluralize(ul, unidades)}`)
   } else {
-    parts.push(`${total} ${total === 1 ? 'unidad' : 'unidades'}`)
+    parts.push(`${total} ${pluralize(ul, total)}`)
   }
-  return parts.length ? parts.join(' · ') : '0 unidades'
+  return parts.length ? parts.join(' · ') : `0 ${pluralize(ul, 0)}`
 }
 
 const buildTableData = () => {
@@ -313,8 +321,8 @@ const buildTableData = () => {
   const rows = filteredProducts.value.map(p => [
     p.product_name,
     p.category_name,
-    ...visibleBranches.value.map(b => stockText(p.stock[b.id] ?? 0, p.unidades_x_pack, p.unidades_x_caja)),
-    stockText(rowTotal(p), p.unidades_x_pack, p.unidades_x_caja)
+    ...visibleBranches.value.map(b => stockText(p.stock[b.id] ?? 0, p.unidades_x_pack, p.unidades_x_caja, p.nivel2_label, p.unidad_label)),
+    stockText(rowTotal(p), p.unidades_x_pack, p.unidades_x_caja, p.nivel2_label, p.unidad_label)
   ])
   const totals = [
     'TOTALES', '',
