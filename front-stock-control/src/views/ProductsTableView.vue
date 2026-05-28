@@ -250,34 +250,42 @@ const currentPage = ref(1)
 const pageSize = ref(25)
 const pageSizeOptions = [10, 25, 50, 100]
 
+const pluralize = (word, count) => {
+  if (count === 1) return word
+  const last = word.slice(-1).toLowerCase()
+  return 'aeiouáéíóú'.includes(last) ? word + 's' : word + 'es'
+}
+
 const stockParts = (prod) => {
   const total = prod.total ?? 0
   const uxp = prod.unidades_x_pack
   const uxc = prod.unidades_x_caja
+  const n2 = prod.nivel2_label || 'caja'
+  const ul = prod.unidad_label || 'unidad'
   const parts = []
 
   if (uxp) {
     const bultos = Math.floor(total / uxp)
     const resto = total % uxp
-    if (bultos > 0) parts.push(`${bultos} ${bultos === 1 ? 'bulto' : 'bultos'}`)
+    if (bultos > 0) parts.push(`${bultos} ${pluralize('bulto', bultos)}`)
     if (uxc) {
       const cajas = Math.floor(resto / uxc)
       const unidades = resto % uxc
-      if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
-      if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+      if (cajas > 0) parts.push(`${cajas} ${pluralize(n2, cajas)}`)
+      if (unidades > 0) parts.push(`${unidades} ${pluralize(ul, unidades)}`)
     } else if (resto > 0) {
-      parts.push(`${resto} ${resto === 1 ? 'unidad' : 'unidades'}`)
+      parts.push(`${resto} ${pluralize(ul, resto)}`)
     }
   } else if (uxc) {
     const cajas = Math.floor(total / uxc)
     const unidades = total % uxc
-    if (cajas > 0) parts.push(`${cajas} ${cajas === 1 ? 'caja' : 'cajas'}`)
-    if (unidades > 0) parts.push(`${unidades} ${unidades === 1 ? 'unidad' : 'unidades'}`)
+    if (cajas > 0) parts.push(`${cajas} ${pluralize(n2, cajas)}`)
+    if (unidades > 0) parts.push(`${unidades} ${pluralize(ul, unidades)}`)
   } else {
-    parts.push(`${total} ${total === 1 ? 'unidad' : 'unidades'}`)
+    parts.push(`${total} ${pluralize(ul, total)}`)
   }
 
-  return parts.length ? parts : ['0 unidades']
+  return parts.length ? parts : [`0 ${pluralize(ul, 0)}`]
 }
 
 const filteredProducts = computed(() => {

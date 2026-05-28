@@ -23,6 +23,8 @@ const getStockReport = async (filters) => {
         category_name: r.category_name,
         unidades_x_pack: r.unidades_x_pack,
         unidades_x_caja: r.unidades_x_caja,
+        nivel2_label: r.nivel2_label,
+        unidad_label: r.unidad_label,
         stock: {}
       })
     }

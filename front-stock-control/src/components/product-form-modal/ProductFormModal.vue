@@ -80,11 +80,11 @@
             Estructura de embalaje
           </h3>
 
-          <!-- Toggle cajas -->
+          <!-- Toggle contenedor intermedio -->
           <div class="flex items-center justify-between rounded-2xl border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-3">
             <div>
-              <p class="text-sm font-semibold text-[var(--color-text-base)]">¿Tiene nivel de Cajas?</p>
-              <p class="mt-0.5 text-xs text-[var(--color-text-muted)]">Activo si el bulto contiene cajas intermedias</p>
+              <p class="text-sm font-semibold text-[var(--color-text-base)]">¿Tiene contenedor intermedio?</p>
+              <p class="mt-0.5 text-xs text-[var(--color-text-muted)]">Activo si el bulto contiene cajas, bolsas u otro contenedor</p>
             </div>
             <button
               type="button"
@@ -99,11 +99,12 @@
             </button>
           </div>
 
-          <!-- Sin cajas: solo unidades_x_pack -->
+          <!-- Sin contenedor intermedio: solo unidades_x_pack (opcional) -->
           <template v-if="!hasCajas">
             <div class="space-y-1.5">
               <label class="block text-sm font-semibold text-[var(--color-text-base)]">
-                Unidades por Bulto <span class="text-[#DC2626]">*</span>
+                Unidades por Bulto
+                <span class="ml-1 text-xs font-normal text-[var(--color-text-muted)]">(opcional)</span>
               </label>
               <input
                 v-model.number="form.unidades_x_pack"
@@ -114,16 +115,17 @@
                 class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
                 :class="{ 'border-[#FCA5A5]': errors.unidades_x_pack }"
               />
+              <p class="text-xs text-[var(--color-text-muted)]">Dejalo vacío si el producto no se agrupa en bultos (ej: latas individuales)</p>
               <p v-if="errors.unidades_x_pack" class="text-xs text-[#DC2626]">{{ errors.unidades_x_pack }}</p>
             </div>
           </template>
 
-          <!-- Con cajas: cajas_x_pack + unidades_x_caja -->
+          <!-- Con contenedor intermedio: cantidad + label -->
           <template v-else>
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
                 <label class="block text-sm font-semibold text-[var(--color-text-base)]">
-                  Cajas por Bulto <span class="text-[#DC2626]">*</span>
+                  Contenedores por Bulto <span class="text-[#DC2626]">*</span>
                 </label>
                 <input
                   v-model.number="form.cajas_x_pack"
@@ -139,7 +141,7 @@
 
               <div class="space-y-1.5">
                 <label class="block text-sm font-semibold text-[var(--color-text-base)]">
-                  Unidades por Caja <span class="text-[#DC2626]">*</span>
+                  Unidades por Contenedor <span class="text-[#DC2626]">*</span>
                 </label>
                 <input
                   v-model.number="form.unidades_x_caja"
@@ -154,6 +156,22 @@
               </div>
             </div>
 
+            <!-- Label del contenedor intermedio -->
+            <div class="space-y-1.5">
+              <label class="block text-sm font-semibold text-[var(--color-text-base)]">
+                Nombre del contenedor
+                <span class="ml-1 text-xs font-normal text-[var(--color-text-muted)]">(opcional)</span>
+              </label>
+              <input
+                v-model="form.nivel2_label"
+                type="text"
+                placeholder="caja"
+                maxlength="50"
+                class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+              />
+              <p class="text-xs text-[var(--color-text-muted)]">Ej: bolsa, tarro, balde (por defecto: caja)</p>
+            </div>
+
             <!-- Unidades x pack calculado -->
             <div class="space-y-1.5">
               <label class="block text-sm font-semibold text-[var(--color-text-muted)]">
@@ -163,10 +181,26 @@
                 <span class="text-sm font-bold text-[var(--color-primary)]">
                   {{ computedUnidadesXPack ?? '—' }}
                 </span>
-                <span class="ml-1.5 text-xs text-[var(--color-text-muted)]">unidades / bulto</span>
+                <span class="ml-1.5 text-xs text-[var(--color-text-muted)]">{{ pluralize(form.unidad_label || 'unidad', computedUnidadesXPack ?? 2) }} / bulto</span>
               </div>
             </div>
           </template>
+
+          <!-- Label de unidad base (siempre visible) -->
+          <div class="space-y-1.5">
+            <label class="block text-sm font-semibold text-[var(--color-text-base)]">
+              Nombre de unidad base
+              <span class="ml-1 text-xs font-normal text-[var(--color-text-muted)]">(opcional)</span>
+            </label>
+            <input
+              v-model="form.unidad_label"
+              type="text"
+              placeholder="unidad"
+              maxlength="50"
+              class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+            />
+            <p class="text-xs text-[var(--color-text-muted)]">Ej: lata, balde, bandeja (por defecto: unidad)</p>
+          </div>
 
           <!-- Preview vivo -->
           <div
@@ -250,12 +284,20 @@ const isEditing = computed(() => !!props.product)
 
 const hasCajas = ref(false)
 
+const pluralize = (word, count) => {
+  if (count === 1) return word
+  const last = word.slice(-1).toLowerCase()
+  return 'aeiouáéíóú'.includes(last) ? word + 's' : word + 'es'
+}
+
 const blankForm = () => ({
   name: '',
   category_name: '',
   unidades_x_pack: null,
   cajas_x_pack: null,
   unidades_x_caja: null,
+  nivel2_label: '',
+  unidad_label: '',
   is_available: true
 })
 
@@ -274,6 +316,8 @@ watch(
         unidades_x_pack: props.product.unidades_x_pack,
         cajas_x_pack: props.product.cajas_x_pack,
         unidades_x_caja: props.product.unidades_x_caja,
+        nivel2_label: props.product.nivel2_label || '',
+        unidad_label: props.product.unidad_label || '',
         is_available: props.product.is_available
       }
       hasCajas.value = !!props.product.cajas_x_pack
@@ -294,15 +338,18 @@ const computedUnidadesXPack = computed(() => {
 })
 
 const packagingPreview = computed(() => {
+  const n2 = form.value.nivel2_label?.trim() || 'caja'
+  const ul = form.value.unidad_label?.trim() || 'unidad'
   if (hasCajas.value) {
     const c = Number(form.value.cajas_x_pack)
     const u = Number(form.value.unidades_x_caja)
     const total = computedUnidadesXPack.value
-    if (c > 0 && u > 0) return `1 Bulto = ${c} Cajas = ${total} Unidades`
+    if (c > 0 && u > 0) return `1 Bulto = ${c} ${pluralize(n2, c)} = ${total} ${pluralize(ul, total)}`
     return null
   }
   const u = Number(form.value.unidades_x_pack)
-  if (u > 0) return `1 Bulto = ${u} Unidades`
+  if (u > 0) return `1 Bulto = ${u} ${pluralize(ul, u)}`
+  if (ul !== 'unidad') return `Unidad base: ${ul}`
   return null
 })
 
@@ -321,8 +368,8 @@ const validate = () => {
   if (hasCajas.value) {
     if (!form.value.cajas_x_pack || form.value.cajas_x_pack < 1) e.cajas_x_pack = 'Requerido, mínimo 1'
     if (!form.value.unidades_x_caja || form.value.unidades_x_caja < 1) e.unidades_x_caja = 'Requerido, mínimo 1'
-  } else {
-    if (!form.value.unidades_x_pack || form.value.unidades_x_pack < 1) e.unidades_x_pack = 'Requerido, mínimo 1'
+  } else if (form.value.unidades_x_pack != null && form.value.unidades_x_pack < 1) {
+    e.unidades_x_pack = 'Debe ser mayor a 0'
   }
 
   errors.value = e
@@ -330,23 +377,29 @@ const validate = () => {
 }
 
 const buildPayload = () => {
+  const labels = {
+    nivel2_label: form.value.nivel2_label?.trim() || null,
+    unidad_label: form.value.unidad_label?.trim() || null
+  }
+  const base = {
+    name: form.value.name.trim(),
+    category_name: form.value.category_name.trim(),
+    ...labels,
+    ...(isEditing.value ? { is_available: form.value.is_available } : {})
+  }
   if (hasCajas.value) {
     return {
-      name: form.value.name.trim(),
-      category_name: form.value.category_name.trim(),
+      ...base,
       cajas_x_pack: Number(form.value.cajas_x_pack),
       unidades_x_caja: Number(form.value.unidades_x_caja),
       unidades_x_pack: computedUnidadesXPack.value,
-      ...(isEditing.value ? { is_available: form.value.is_available } : {})
     }
   }
   return {
-    name: form.value.name.trim(),
-    category_name: form.value.category_name.trim(),
-    unidades_x_pack: Number(form.value.unidades_x_pack),
+    ...base,
+    unidades_x_pack: form.value.unidades_x_pack ? Number(form.value.unidades_x_pack) : null,
     cajas_x_pack: null,
     unidades_x_caja: null,
-    ...(isEditing.value ? { is_available: form.value.is_available } : {})
   }
 }
 
