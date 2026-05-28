@@ -121,7 +121,7 @@
 
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { createStockMovement } from '../services/MovementsService.js'
 import { getStockByBranch } from '../services/ProductService.js'
 import { getReasonCategories } from '../services/ReasonCategoriesService.js'
@@ -132,6 +132,7 @@ import MovementItemsStep from '../components/StockMovementModal/MovementItemsSte
 import MovementReviewStep from '../components/StockMovementModal/MovementReviewStep.vue'
 
 const router = useRouter()
+const route = useRoute()
 const toast = useToastStore()
 
 const stepsLabels = ['Tipo y sucursal', 'Productos', 'Revisión']
@@ -346,8 +347,9 @@ onMounted(async () => {
     loadReasonCategories()
   ])
   branches.value = fetchedBranches
-  if (fetchedBranches.length) {
-    draft.from_branch_id = fetchedBranches[0].id
-  }
+
+  const queryBranch = route.query.branch ? Number(route.query.branch) : null
+  const preselected = queryBranch && fetchedBranches.find(b => b.id === queryBranch)
+  draft.from_branch_id = preselected ? preselected.id : (fetchedBranches[0]?.id ?? null)
 })
 </script>

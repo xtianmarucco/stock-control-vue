@@ -28,24 +28,13 @@
         <SidebarItem icon="users" label="Usuarios" to="/users" @navigate="emit('close')" />
 
         <SidebarItem
-          icon="box"
-          label="Productos"
-          :active="isProductsRoute"
-          :open="isProductsOpen"
-          @toggle="toggleProducts"
+          icon="boxes"
+          label="Stock"
+          :active="isStockRoute"
+          :open="isStockOpen"
+          @toggle="toggleStock"
           @navigate="emit('close')"
         >
-          <RouterLink
-            to="/products/catalog"
-            class="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs transition-colors"
-            :class="route.name === 'ProductsCatalog'
-              ? 'text-white bg-white/10'
-              : 'text-slate-400 hover:text-white hover:bg-white/5'"
-            @click="emit('close')"
-          >
-            <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"></span>
-            <span>Catálogo</span>
-          </RouterLink>
           <RouterLink
             v-for="branch in branches"
             :key="branch.id"
@@ -63,6 +52,7 @@
 
         <SidebarItem icon="arrow-left-right" label="Movimientos" to="/movements" @navigate="emit('close')" />
         <SidebarItem icon="bar-chart-3" label="Reportes" to="/reports" @navigate="emit('close')" />
+        <SidebarItem icon="box" label="Catálogo" to="/products/catalog" @navigate="emit('close')" />
       </nav>
     </div>
   </aside>
@@ -84,19 +74,17 @@ const route = useRoute()
 
 const branches = ref([])
 const branchesLoaded = ref(false)
-const isProductsOpen = ref(false)
+const isStockOpen = ref(false)
 
-const isProductsRoute = computed(() =>
-  route.path.startsWith('/branches/') || route.name === 'ProductsCatalog'
-)
+const isStockRoute = computed(() => route.path.startsWith('/branches/'))
 
-const toggleProducts = () => {
-  isProductsOpen.value = !isProductsOpen.value
+const toggleStock = () => {
+  isStockOpen.value = !isStockOpen.value
 }
 
 watch(
   () => route.fullPath,
-  () => { if (isProductsRoute.value) isProductsOpen.value = true },
+  () => { if (isStockRoute.value) isStockOpen.value = true },
   { immediate: true }
 )
 

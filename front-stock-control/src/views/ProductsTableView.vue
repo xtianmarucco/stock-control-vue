@@ -15,18 +15,27 @@
           </p>
         </div>
 
-        <div class="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
-          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Productos visibles</p>
-            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ filteredProducts.length }}</p>
-          </div>
-          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Categorías</p>
-            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ categories.length }}</p>
-          </div>
-          <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Stock crítico</p>
-            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ lowStockCount }}</p>
+        <div class="flex flex-col items-start gap-4 xl:items-end">
+          <button
+            class="inline-flex items-center gap-2 rounded-2xl bg-[var(--color-primary)] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(20,121,255,0.22)] transition hover:bg-[#0f66e0]"
+            @click="goToNewMovement"
+          >
+            <span>+</span>
+            <span>Nuevo movimiento</span>
+          </button>
+          <div class="grid gap-3 sm:grid-cols-3 xl:min-w-[420px]">
+            <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Productos visibles</p>
+              <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ filteredProducts.length }}</p>
+            </div>
+            <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Categorías</p>
+              <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ categories.length }}</p>
+            </div>
+            <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
+              <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Stock crítico</p>
+              <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ lowStockCount }}</p>
+            </div>
           </div>
         </div>
       </div>
@@ -222,15 +231,20 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue'
 import SkeletonBlock from '../components/ui/SkeletonBlock.vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { getStockByBranch } from '../services/ProductService.js'
 import { getStockSummaryByCategory } from '../services/stockService.js'
 import { getBranchById } from '../services/BranchService.js'
 import ProductDrawer from '../components/product-drawer/ProductDrawer.vue'
 
 const route = useRoute()
+const router = useRouter()
 
 const branchId = computed(() => Number(route.params.branchId))
+
+const goToNewMovement = () => {
+  router.push({ name: 'StockMovementFormView', query: { branch: branchId.value } })
+}
 
 const drawerOpen = ref(false)
 const selectedProduct = ref(null)

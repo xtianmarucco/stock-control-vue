@@ -20,7 +20,7 @@
           </div>
           <div class="rounded-[24px] border border-[var(--color-border)] bg-[#FAFBFE] px-4 py-4">
             <p class="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--color-text-muted)]">Total global</p>
-            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ grandTotal }} <span class="text-base font-normal text-[var(--color-text-muted)]">uds</span></p>
+            <p class="mt-2 text-2xl font-bold text-[var(--color-text-base)]">{{ grandTotalBultos }} <span class="text-base font-normal text-[var(--color-text-muted)]">bultos</span></p>
           </div>
         </div>
       </div>
@@ -257,6 +257,14 @@ const branchTotal = (branchId) =>
 
 const grandTotal = computed(() =>
   filteredProducts.value.reduce((sum, p) => sum + rowTotal(p), 0)
+)
+
+const grandTotalBultos = computed(() =>
+  filteredProducts.value.reduce((sum, p) => {
+    const uxp = p.unidades_x_pack
+    if (!uxp) return sum
+    return sum + Math.floor(rowTotal(p) / uxp)
+  }, 0)
 )
 
 const fetchReport = async () => {
