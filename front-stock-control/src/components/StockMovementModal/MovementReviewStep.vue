@@ -60,9 +60,9 @@
               </td>
               <td class="px-4 py-3 text-center">
                 <p class="font-semibold text-[var(--color-text-base)]">
-                  {{ signedQuantity(item.quantity_input, item.quantity_unit) }}
+                  {{ signedBreakdown(item) }}
                 </p>
-                <p v-if="item.quantity_unit !== 'UNIDAD'" class="mt-0.5 text-xs text-[var(--color-text-muted)]">
+                <p v-if="hasConversion(item)" class="mt-0.5 text-xs text-[var(--color-text-muted)]">
                   = {{ signedUnidades(item) }} u.
                 </p>
               </td>
@@ -118,27 +118,33 @@ const toBranchName = computed(() => {
 //
 // Cantidad con signo
 //
-const unitLabel = (unit) => ({ BULTO: 'bulto(s)', CAJA: 'caja(s)', UNIDAD: 'unidad(es)' }[unit] ?? 'u.')
-
 const toUnidades = (item) => {
-  const q = item.quantity_input
-  if (!q) return 0
-  const unit = item.quantity_unit ?? 'UNIDAD'
-  if (unit === 'UNIDAD') return q
-  if (unit === 'CAJA') return item.unidades_x_caja ? q * item.unidades_x_caja : q
-  if (unit === 'BULTO') return item.unidades_x_pack ? q * item.unidades_x_pack : q
-  return q
+  const bultos = (item.qty_bultos || 0) * (item.unidades_x_pack || 0)
+  const cajas = (item.qty_cajas || 0) * (item.unidades_x_caja || 0)
+  const unidades = item.qty_unidades || 0
+  return bultos + cajas + unidades
 }
 
-const signedQuantity = (q, unit) => {
+const breakdownText = (item) => {
+  const parts = []
+  if ((item.qty_bultos || 0) > 0) parts.push(`${item.qty_bultos} bts`)
+  if ((item.qty_cajas || 0) > 0) parts.push(`${item.qty_cajas} cjs`)
+  if ((item.qty_unidades || 0) > 0) parts.push(`${item.qty_unidades} u.`)
+  return parts.length > 0 ? parts.join(' + ') : '0 u.'
+}
+
+const signedBreakdown = (item) => {
   const sign = props.draft.movement_type === 'ADJUSTMENT' ? '-' : '+'
-  return `${sign}${Math.abs(q)} ${unitLabel(unit)}`
+  return `${sign}${breakdownText(item)}`
 }
 
 const signedUnidades = (item) => {
-  const u = toUnidades(item)
   const sign = props.draft.movement_type === 'ADJUSTMENT' ? '-' : '+'
-  return `${sign}${Math.abs(u)}`
+  return `${sign}${toUnidades(item)}`
+}
+
+const hasConversion = (item) => {
+  return (item.qty_bultos || 0) > 0 || (item.qty_cajas || 0) > 0
 }
 
 //

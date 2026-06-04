@@ -156,7 +156,7 @@
           <div class="flex items-start justify-between gap-2">
             <div class="min-w-0">
               <p class="truncate text-sm font-semibold text-[var(--color-text-base)]">{{ row.product_name }}</p>
-              <p class="mt-0.5 text-xs text-[var(--color-text-muted)]">Disp: {{ availableInUnit(row) }}</p>
+              <p class="mt-0.5 text-xs text-[var(--color-text-muted)]">Disp: {{ stockAvailable(row) }}</p>
             </div>
             <button
               type="button"
@@ -167,40 +167,43 @@
             </button>
           </div>
 
-          <!-- Selector de unidad -->
-          <div v-if="row.product_id" class="mt-3 flex gap-1">
-            <button
-              v-for="unit in availableUnits(row)"
-              :key="unit.value"
-              type="button"
-              class="rounded-xl px-3 py-1.5 text-xs font-semibold transition"
-              :class="row.quantity_unit === unit.value
-                ? 'bg-[var(--color-primary)] text-white shadow-[0_4px_12px_rgba(20,121,255,0.2)]'
-                : 'bg-white border border-[var(--color-border)] text-[var(--color-text-base)] hover:border-[var(--color-primary)]'"
-              @click="setUnit(row, unit.value)"
-            >
-              {{ unit.label }}
-            </button>
+          <!-- Inputs por nivel de unidad -->
+          <div class="mt-3 space-y-2">
+            <div v-if="row.unidades_x_pack" class="flex items-center gap-2">
+              <span class="w-16 flex-shrink-0 text-xs font-semibold text-[var(--color-text-muted)]">Bultos</span>
+              <input
+                type="number" min="0" step="1"
+                v-model.number="row.qty_bultos"
+                placeholder="0"
+                class="flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+              />
+            </div>
+            <div v-if="row.unidades_x_caja" class="flex items-center gap-2">
+              <span class="w-16 flex-shrink-0 text-xs font-semibold text-[var(--color-text-muted)]">Cajas</span>
+              <input
+                type="number" min="0" step="1"
+                v-model.number="row.qty_cajas"
+                placeholder="0"
+                class="flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+              />
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="w-16 flex-shrink-0 text-xs font-semibold text-[var(--color-text-muted)]">Unidades</span>
+              <input
+                type="number" min="0" step="1"
+                v-model.number="row.qty_unidades"
+                placeholder="0"
+                class="flex-1 rounded-xl border border-[var(--color-border)] bg-white px-3 py-2 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
+              />
+            </div>
           </div>
 
-          <!-- Input de cantidad -->
-          <div class="mt-2">
-            <input
-              type="number"
-              min="1"
-              step="1"
-              v-model.number="row.quantity_input"
-              :placeholder="`Cantidad en ${unitLabel(row.quantity_unit)}`"
-              class="w-full rounded-2xl border border-[var(--color-border)] bg-white px-4 py-2.5 text-sm text-[var(--color-text-base)] outline-none transition focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[#DCEBFF]"
-            />
-          </div>
-
-          <!-- Info de conversión -->
+          <!-- Total en unidades -->
           <p
-            v-if="conversionInfo(row)"
+            v-if="itemTotal(row) > 0 && (row.unidades_x_pack || row.unidades_x_caja)"
             class="mt-1.5 text-xs font-medium text-[var(--color-primary)]"
           >
-            ↳ {{ conversionInfo(row) }}
+            ↳ Total: {{ itemTotal(row) }} unidades
           </p>
         </div>
       </div>
@@ -225,7 +228,13 @@ const emit = defineEmits(['update:items'])
 
 const localItems = ref(
   props.items && props.items.length > 0
-    ? props.items.map(i => ({ ...i, uid: crypto.randomUUID() }))
+    ? props.items.map(i => ({
+        ...i,
+        uid: crypto.randomUUID(),
+        qty_bultos: i.qty_bultos ?? null,
+        qty_cajas: i.qty_cajas ?? null,
+        qty_unidades: i.qty_unidades ?? null,
+      }))
     : []
 )
 
@@ -252,34 +261,11 @@ const isAdded = (productId) => localItems.value.some(r => r.product_id === produ
 
 // ─── Utilidades de unidad ─────────────────────────────────────────────────────
 
-const unitLabel = (unit) => ({ BULTO: 'bultos', CAJA: 'cajas', UNIDAD: 'unidades' }[unit] ?? 'unidades')
-
-const availableUnits = (row) => {
-  const units = [{ value: 'UNIDAD', label: 'Unidad' }]
-  if (row.unidades_x_caja) units.unshift({ value: 'CAJA', label: 'Caja' })
-  if (row.unidades_x_pack) units.unshift({ value: 'BULTO', label: 'Bulto' })
-  return units
-}
-
-const defaultUnit = (row) => {
-  if (row.unidades_x_pack) return 'BULTO'
-  if (row.unidades_x_caja) return 'CAJA'
-  return 'UNIDAD'
-}
-
-const toUnidades = (qty, unit, row) => {
-  if (!qty || qty <= 0) return null
-  if (unit === 'UNIDAD') return qty
-  if (unit === 'CAJA') return row.unidades_x_caja ? qty * row.unidades_x_caja : null
-  if (unit === 'BULTO') return row.unidades_x_pack ? qty * row.unidades_x_pack : null
-  return null
-}
-
-const availableInUnit = (row) => {
+const stockAvailable = (row) => {
   if (row.available_stock == null) return '—'
   const s = row.available_stock
-  if (row.quantity_unit === 'BULTO' && row.unidades_x_pack) return `${Math.floor(s / row.unidades_x_pack)} bultos`
-  if (row.quantity_unit === 'CAJA' && row.unidades_x_caja) return `${Math.floor(s / row.unidades_x_caja)} cajas`
+  if (row.unidades_x_pack) return `${Math.floor(s / row.unidades_x_pack)} bultos`
+  if (row.unidades_x_caja) return `${Math.floor(s / row.unidades_x_caja)} cajas`
   return `${s} unidades`
 }
 
@@ -289,19 +275,14 @@ const stockLabel = (product) => {
   return `${product.total} u.`
 }
 
-const conversionInfo = (row) => {
-  if (!row.quantity_input || row.quantity_unit === 'UNIDAD') return null
-  const u = toUnidades(row.quantity_input, row.quantity_unit, row)
-  if (u === null) return null
-  return `${row.quantity_input} ${unitLabel(row.quantity_unit)} = ${u} unidades`
+const itemTotal = (row) => {
+  const bultos = (row.qty_bultos || 0) * (row.unidades_x_pack || 0)
+  const cajas = (row.qty_cajas || 0) * (row.unidades_x_caja || 0)
+  const unidades = row.qty_unidades || 0
+  return bultos + cajas + unidades
 }
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
-
-const setUnit = (row, unit) => {
-  row.quantity_unit = unit
-  row.quantity_input = null
-}
 
 const addProduct = (product) => {
   if (isAdded(product.id)) return
@@ -313,8 +294,9 @@ const addProduct = (product) => {
     cajas_x_pack: product.cajas_x_pack ?? null,
     unidades_x_caja: product.unidades_x_caja ?? null,
     unidades_x_pack: product.unidades_x_pack ?? null,
-    quantity_input: null,
-    quantity_unit: defaultUnit(product)
+    qty_bultos: null,
+    qty_cajas: null,
+    qty_unidades: null,
   })
 }
 
@@ -334,8 +316,9 @@ watch(
       cajas_x_pack: row.cajas_x_pack,
       unidades_x_caja: row.unidades_x_caja,
       unidades_x_pack: row.unidades_x_pack,
-      quantity_input: row.quantity_input,
-      quantity_unit: row.quantity_unit ?? 'UNIDAD'
+      qty_bultos: row.qty_bultos,
+      qty_cajas: row.qty_cajas,
+      qty_unidades: row.qty_unidades,
     })))
   },
   { deep: true }
