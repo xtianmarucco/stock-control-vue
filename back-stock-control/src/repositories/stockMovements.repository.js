@@ -97,10 +97,11 @@ const createWithItems = async ({ movement_type, from_branch_id, to_branch_id, re
         data: { movement_id: movement.id, product_id, quantity }
       })
 
-      await upsertStock(tx, from_branch_id, product_id, quantity)
+      const fromDelta = movement_type === 'TRANSFER' ? -quantity : quantity
+      await upsertStock(tx, from_branch_id, product_id, fromDelta)
 
       if (movement_type === 'TRANSFER' && to_branch_id) {
-        await upsertStock(tx, to_branch_id, product_id, Math.abs(quantity))
+        await upsertStock(tx, to_branch_id, product_id, quantity)
       }
     }
 
