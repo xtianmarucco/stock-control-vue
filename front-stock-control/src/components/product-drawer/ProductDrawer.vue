@@ -158,7 +158,11 @@
             <div class="mt-2 flex items-center gap-3">
               <span
                 class="text-3xl font-bold"
-                :class="preview?.low_stock ? 'text-[#DC2626]' : 'text-[var(--color-text-base)]'"
+                :class="(preview?.total ?? 0) < 0
+                  ? 'text-amber-600'
+                  : preview?.low_stock
+                    ? 'text-[#DC2626]'
+                    : 'text-[var(--color-text-base)]'"
               >
                 {{ preview?.total ?? '—' }}
               </span>
@@ -166,9 +170,13 @@
                 <p class="text-sm font-semibold text-[var(--color-text-base)]">unidades</p>
                 <span
                   class="mt-0.5 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold"
-                  :class="preview?.low_stock ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#DCFCE7] text-[#16A34A]'"
+                  :class="(preview?.total ?? 0) < 0
+                    ? 'bg-amber-100 text-amber-700'
+                    : preview?.low_stock
+                      ? 'bg-[#FEE2E2] text-[#DC2626]'
+                      : 'bg-[#DCFCE7] text-[#16A34A]'"
                 >
-                  {{ preview?.low_stock ? 'Stock crítico' : 'Normal' }}
+                  {{ (preview?.total ?? 0) < 0 ? 'Desvío saludable' : preview?.low_stock ? 'Stock crítico' : 'Normal' }}
                 </span>
               </div>
             </div>
@@ -369,16 +377,20 @@ const formatDecimal = (val) => {
 
 const stockBreakdown = computed(() => {
   if (!product.value || props.preview?.total == null) return []
-  const p = product.value
   const unidades = props.preview.total
+  const abs = Math.abs(unidades)
+  const sign = unidades < 0 ? '−' : ''
+  const p = product.value
   const items = []
 
   if (p.unidades_x_pack) {
-    items.push({ label: 'Equivale en bultos', value: Math.floor(unidades / p.unidades_x_pack), unit: 'bultos' })
+    const val = Math.floor(abs / p.unidades_x_pack)
+    if (val > 0) items.push({ label: 'Equivale en bultos', value: `${sign}${val}`, unit: 'bultos' })
   }
 
   if (p.unidades_x_caja) {
-    items.push({ label: 'Equivale en cajas', value: Math.floor(unidades / p.unidades_x_caja), unit: 'cajas' })
+    const val = Math.floor(abs / p.unidades_x_caja)
+    if (val > 0) items.push({ label: 'Equivale en cajas', value: `${sign}${val}`, unit: 'cajas' })
   }
 
   return items

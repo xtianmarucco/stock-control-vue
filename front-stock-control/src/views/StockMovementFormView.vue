@@ -84,6 +84,7 @@
         :draft="draft"
         :branches="branches"
         :reason-categories="reasonCategories"
+        :desvios="desvios"
       />
     </div>
 
@@ -108,11 +109,14 @@
 
         <button
           v-else
-          class="rounded-2xl bg-[#1479FF] px-5 py-2.5 text-sm font-semibold text-white shadow-[0_16px_30px_rgba(20,121,255,0.22)] transition hover:bg-[#0f66e0] disabled:cursor-wait disabled:opacity-70"
+          class="rounded-2xl px-5 py-2.5 text-sm font-semibold text-white transition disabled:cursor-wait disabled:opacity-70"
+          :class="desvios.length > 0
+            ? 'bg-amber-500 shadow-[0_16px_30px_rgba(245,158,11,0.25)] hover:bg-amber-600'
+            : 'bg-[#1479FF] shadow-[0_16px_30px_rgba(20,121,255,0.22)] hover:bg-[#0f66e0]'"
           :disabled="submitting"
           @click="submit"
         >
-          {{ submitting ? 'Guardando...' : 'Confirmar movimiento' }}
+          {{ submitting ? 'Guardando...' : desvios.length > 0 ? 'Confirmar desvío y guardar' : 'Confirmar movimiento' }}
         </button>
       </div>
     </div>
@@ -157,6 +161,22 @@ const draft = reactive({
 const selectedReasonCategory = computed(() =>
   reasonCategories.value.find(c => c.id === draft.reason_category_id) ?? null
 )
+
+const desvios = computed(() => {
+  if (draft.movement_type === 'INTERNAL') return []
+  return draft.items
+    .filter(item => {
+      const qty = toUnidades(item)
+      return qty && item.available_stock != null && qty > item.available_stock
+    })
+    .map(item => ({
+      product_id: item.product_id,
+      product_name: item.product_name,
+      available: item.available_stock,
+      requested: toUnidades(item),
+      resulting: (item.available_stock ?? 0) - toUnidades(item)
+    }))
+})
 
 const cancel = () => router.push('/movements')
 
@@ -220,10 +240,6 @@ const validateStep2 = () => {
       return false
     }
 
-    if (draft.movement_type === 'TRANSFER' && unidades > item.available_stock) {
-      formMessage.value = `Stock insuficiente para "${item.product_name}". Disponible: ${item.available_stock} unidades, solicitado: ${unidades} unidades.`
-      return false
-    }
   }
 
   return true
@@ -291,7 +307,8 @@ const submit = async () => {
       items: draft.items.map(item => ({
         product_id: item.product_id,
         quantity: transformQuantity(toUnidades(item), draft.movement_type)
-      }))
+      })),
+      ...(desvios.value.length > 0 ? { force: true } : {})
     }
 
     await createStockMovement(payload)

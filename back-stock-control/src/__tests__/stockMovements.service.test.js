@@ -205,27 +205,46 @@ describe('create — validación de items', () => {
 })
 
 // ---------------------------------------------------------------------------
-describe('create — validación de stock disponible', () => {
-  it('lanza INSUFFICIENT_STOCK en TRANSFER si no hay suficiente stock', async () => {
+describe('create — desvío saludable', () => {
+  it('lanza WOULD_CREATE_DESVIO en TRANSFER si no hay suficiente stock (sin force)', async () => {
     repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 2 }])
     await expect(create({ ...baseTransfer, items: [{ product_id: 1, quantity: 5 }] }))
-      .rejects.toMatchObject({ code: 'INSUFFICIENT_STOCK', status: 400 })
+      .rejects.toMatchObject({ code: 'WOULD_CREATE_DESVIO', status: 409 })
   })
 
-  it('lanza INSUFFICIENT_STOCK en ADJUSTMENT si la cantidad negativa supera el stock', async () => {
+  it('lanza WOULD_CREATE_DESVIO en ADJUSTMENT si la cantidad supera el stock (sin force)', async () => {
     repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 1 }])
     await expect(create({ ...baseAdjustment, items: [{ product_id: 1, quantity: -5 }] }))
-      .rejects.toMatchObject({ code: 'INSUFFICIENT_STOCK', status: 400 })
+      .rejects.toMatchObject({ code: 'WOULD_CREATE_DESVIO', status: 409 })
   })
 
-  it('pasa la validación de stock cuando hay suficiente', async () => {
-    repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 100 }])
-    const result = await create(baseTransfer)
+  it('lanza WOULD_CREATE_DESVIO si el producto no tiene stock registrado (sin force)', async () => {
+    repo.findSourceStock.mockResolvedValue([])
+    await expect(create(baseTransfer)).rejects.toMatchObject({ code: 'WOULD_CREATE_DESVIO', status: 409 })
+  })
+
+  it('el error incluye detalle del desvío (product_id, available, requested, resulting)', async () => {
+    repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 2 }])
+    const err = await create({ ...baseTransfer, items: [{ product_id: 1, quantity: 5 }] }).catch(e => e)
+    expect(err.data.desvios).toHaveLength(1)
+    expect(err.data.desvios[0]).toMatchObject({ product_id: 1, available: 2, requested: 5, resulting: -3 })
+  })
+
+  it('con force:true permite el movimiento aunque genere desvío', async () => {
+    repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 2 }])
+    const result = await create({ ...baseTransfer, items: [{ product_id: 1, quantity: 5 }], force: true })
     expect(result).toEqual({ id: 1 })
   })
 
-  it('lanza INSUFFICIENT_STOCK si el producto no tiene stock registrado', async () => {
-    repo.findSourceStock.mockResolvedValue([])
-    await expect(create(baseTransfer)).rejects.toMatchObject({ code: 'INSUFFICIENT_STOCK', status: 400 })
+  it('con force:true en ADJUSTMENT permite el movimiento aunque genere desvío', async () => {
+    repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 1 }])
+    const result = await create({ ...baseAdjustment, items: [{ product_id: 1, quantity: -5 }], force: true })
+    expect(result).toEqual({ id: 1 })
+  })
+
+  it('sin desvío crea el movimiento normalmente', async () => {
+    repo.findSourceStock.mockResolvedValue([{ product_id: 1, total: 100 }])
+    const result = await create(baseTransfer)
+    expect(result).toEqual({ id: 1 })
   })
 })

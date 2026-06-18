@@ -35,14 +35,15 @@ const handleError = (res, err) => {
 
   res.status(status).json({
     success: false,
-    error: { message, code }
+    error: { message, code, ...(err.data ? { data: err.data } : {}) }
   })
 }
 
-const createError = (message, code, status) => {
+const createError = (message, code, status, data = null) => {
   const err = new Error(message)
   err.code = code
   err.status = status
+  if (data) err.data = data
   return err
 }
 

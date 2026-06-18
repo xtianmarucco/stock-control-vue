@@ -54,7 +54,15 @@ const create = async (payload) => {
   }
 
   const normalizedItems = normalizeItems(items)
-  await validateStockAvailability({ movement_type, from_branch_id: sourceBranchId, items: normalizedItems })
+  const desvios = await checkDesvios({ movement_type, from_branch_id: sourceBranchId, items: normalizedItems })
+  if (desvios.length > 0 && !payload.force) {
+    throw createError(
+      'El movimiento generaría stock negativo en algunos productos',
+      'WOULD_CREATE_DESVIO',
+      409,
+      { desvios }
+    )
+  }
 
   const movement = await repo.createWithItems({
     movement_type,
@@ -86,11 +94,11 @@ function normalizeItems(items) {
   })
 }
 
-async function validateStockAvailability({ movement_type, from_branch_id, items }) {
-  if (movement_type === 'INTERNAL' && items.every(item => item.quantity > 0)) return
+async function checkDesvios({ movement_type, from_branch_id, items }) {
+  if (movement_type === 'INTERNAL' && items.every(item => item.quantity > 0)) return []
 
   const outgoingItems = items.filter(item => item.quantity < 0 || movement_type === 'TRANSFER')
-  if (!outgoingItems.length) return
+  if (!outgoingItems.length) return []
 
   const requestedByProductId = new Map()
 
@@ -103,17 +111,14 @@ async function validateStockAvailability({ movement_type, from_branch_id, items 
   const stockRows = await repo.findSourceStock(from_branch_id, productIds)
   const stockByProductId = new Map(stockRows.map(row => [row.product_id, Number(row.total ?? 0)]))
 
+  const desvios = []
   for (const [productId, requested] of requestedByProductId.entries()) {
     const available = stockByProductId.get(productId) ?? 0
-
     if (requested > available) {
-      throw createError(
-        `Insufficient stock for product ${productId}. Available: ${available}, requested: ${requested}`,
-        'INSUFFICIENT_STOCK',
-        400
-      )
+      desvios.push({ product_id: productId, available, requested, resulting: available - requested })
     }
   }
+  return desvios
 }
 
 function formatMovement(m) {

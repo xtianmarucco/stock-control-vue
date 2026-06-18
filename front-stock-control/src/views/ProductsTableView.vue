@@ -180,7 +180,11 @@
                       v-for="part in stockParts(prod)"
                       :key="part"
                       class="inline-flex items-center justify-center rounded-full px-3 py-1.5 text-sm font-semibold"
-                      :class="prod.low_stock ? 'bg-[#FEE2E2] text-[#DC2626]' : 'bg-[#DCFCE7] text-[#16A34A]'"
+                      :class="(prod.total ?? 0) < 0
+                        ? 'bg-amber-100 text-amber-700'
+                        : prod.low_stock
+                          ? 'bg-[#FEE2E2] text-[#DC2626]'
+                          : 'bg-[#DCFCE7] text-[#16A34A]'"
                     >
                       {{ part }}
                     </span>
@@ -272,6 +276,10 @@ const pluralize = (word, count) => {
 
 const stockParts = (prod) => {
   const total = prod.total ?? 0
+  if (total < 0) {
+    const absParts = stockParts({ ...prod, total: Math.abs(total) })
+    return absParts.map((part, i) => i === 0 ? `−${part}` : part)
+  }
   const uxp = prod.unidades_x_pack
   const uxc = prod.unidades_x_caja
   const n2 = prod.nivel2_label || 'caja'

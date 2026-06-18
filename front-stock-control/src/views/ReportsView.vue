@@ -178,11 +178,13 @@
                   v-for="branch in visibleBranches"
                   :key="branch.id"
                   class="px-5 py-3.5 text-right whitespace-nowrap font-medium"
-                  :class="(product.stock[branch.id] ?? 0) === 0
-                    ? 'text-[var(--color-text-muted)]'
-                    : (product.stock[branch.id] ?? 0) <= 3
-                      ? 'text-[#DC2626]'
-                      : 'text-[var(--color-text-base)]'"
+                  :class="(product.stock[branch.id] ?? 0) < 0
+                    ? 'text-amber-600 font-semibold'
+                    : (product.stock[branch.id] ?? 0) === 0
+                      ? 'text-[var(--color-text-muted)]'
+                      : (product.stock[branch.id] ?? 0) <= 3
+                        ? 'text-[#DC2626]'
+                        : 'text-[var(--color-text-base)]'"
                 >
                   {{ stockText(product.stock[branch.id] ?? 0, product.unidades_x_pack, product.unidades_x_caja, product.nivel2_label, product.unidad_label) }}
                 </td>
@@ -298,6 +300,7 @@ const pluralize = (word, count) => {
 }
 
 const stockText = (total, uxp, uxc, n2label, ulabel) => {
+  if (total < 0) return `−${stockText(Math.abs(total), uxp, uxc, n2label, ulabel)}`
   const n2 = n2label || 'caja'
   const ul = ulabel || 'unidad'
   const parts = []

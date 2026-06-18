@@ -205,6 +205,14 @@
           >
             ↳ Total: {{ itemTotal(row) }} unidades
           </p>
+
+          <!-- Aviso de desvío -->
+          <p
+            v-if="wouldCreateDesvio(row)"
+            class="mt-1.5 text-xs font-semibold text-amber-600"
+          >
+            ⚠ Desvío: el stock resultará en {{ desvioResultante(row) }} u.
+          </p>
         </div>
       </div>
     </div>
@@ -264,12 +272,14 @@ const isAdded = (productId) => localItems.value.some(r => r.product_id === produ
 const stockAvailable = (row) => {
   if (row.available_stock == null) return '—'
   const s = row.available_stock
+  if (s < 0) return `${s} u.`
   if (row.unidades_x_pack) return `${Math.floor(s / row.unidades_x_pack)} bultos`
   if (row.unidades_x_caja) return `${Math.floor(s / row.unidades_x_caja)} cajas`
   return `${s} unidades`
 }
 
 const stockLabel = (product) => {
+  if (product.total < 0) return `${product.total} u.`
   if (product.unidades_x_pack) return `${Math.floor(product.total / product.unidades_x_pack)} bts`
   if (product.unidades_x_caja) return `${Math.floor(product.total / product.unidades_x_caja)} cajas`
   return `${product.total} u.`
@@ -281,6 +291,14 @@ const itemTotal = (row) => {
   const unidades = row.qty_unidades || 0
   return bultos + cajas + unidades
 }
+
+const wouldCreateDesvio = (row) => {
+  if (props.movementType === 'INTERNAL') return false
+  const qty = itemTotal(row)
+  return qty > 0 && row.available_stock != null && qty > row.available_stock
+}
+
+const desvioResultante = (row) => (row.available_stock ?? 0) - itemTotal(row)
 
 // ─── Handlers ────────────────────────────────────────────────────────────────
 

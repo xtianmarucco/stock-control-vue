@@ -3,6 +3,24 @@
   <div class="flex flex-col gap-6">
     <h3 class="text-xl font-semibold text-[var(--color-text-base)]">Revisión del movimiento</h3>
 
+    <!-- Alerta de desvío -->
+    <div
+      v-if="desvios.length > 0"
+      class="rounded-[24px] border border-amber-200 bg-amber-50 p-4"
+    >
+      <p class="text-sm font-semibold text-amber-800">⚠ Este movimiento generará desvíos saludables</p>
+      <p class="mt-1 text-xs text-amber-700">El stock de los siguientes productos quedará en negativo. Podrás reponer después:</p>
+      <ul class="mt-2 space-y-1">
+        <li
+          v-for="d in desvios"
+          :key="d.product_id"
+          class="text-xs font-medium text-amber-800"
+        >
+          • {{ d.product_name }}: {{ d.available }} u. disponibles → resultará en {{ d.resulting }} u.
+        </li>
+      </ul>
+    </div>
+
     <div class="rounded-[28px] border border-[var(--color-border)] bg-[#FAFBFE] p-5">
       <h4 class="mb-4 text-lg font-semibold text-[var(--color-text-base)]">Detalles generales</h4>
 
@@ -67,7 +85,14 @@
                 </p>
               </td>
               <td class="px-4 py-3 text-center">
-                <span :class="resultBadgeClass">{{ resultLabel }}</span>
+                <span
+                  class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold"
+                  :class="resultingStock(item) < 0
+                    ? 'bg-amber-100 text-amber-700'
+                    : resultBadgeClass"
+                >
+                  {{ resultingStock(item) < 0 ? `${resultingStock(item)} u.` : resultLabel }}
+                </span>
               </td>
             </tr>
           </tbody>
@@ -84,7 +109,8 @@ import { computed } from 'vue'
 const props = defineProps({
   draft: { type: Object, required: true },
   branches: { type: Array, required: true },
-  reasonCategories: { type: Array, default: () => [] }
+  reasonCategories: { type: Array, default: () => [] },
+  desvios: { type: Array, default: () => [] }
 })
 
 //
@@ -145,6 +171,15 @@ const signedUnidades = (item) => {
 
 const hasConversion = (item) => {
   return (item.qty_bultos || 0) > 0 || (item.qty_cajas || 0) > 0
+}
+
+//
+// Stock resultante por item
+//
+const resultingStock = (item) => {
+  const qty = toUnidades(item)
+  if (props.draft.movement_type === 'INTERNAL') return (item.available_stock ?? 0) + qty
+  return (item.available_stock ?? 0) - qty
 }
 
 //
