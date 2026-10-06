@@ -39,6 +39,13 @@ Todos los endpoints deben seguir estas reglas estrictamente.
 POST   /auth/login             → iniciar sesión (body: email, password)
 POST   /auth/logout            → cerrar sesión
 GET    /auth/me                → obtener usuario autenticado actual
+POST   /auth/forgot-password   → pedir link de recuperación (body: email). Público.
+                                 Responde siempre { success: true, data: null }, exista o no el email.
+                                 Si el usuario pidió otro link hace menos de 60 s, no se reenvía.
+POST   /auth/reset-password    → definir nueva contraseña (body: token, password). Público.
+                                 password mínimo 8 caracteres. Token de un solo uso, vence a los 30 min.
+                                 Token inválido/usado/vencido → 400 VALIDATION_ERROR.
+                                 Al resetear se cierran todas las sesiones del usuario.
 
 ## Branches (Sucursales)
 

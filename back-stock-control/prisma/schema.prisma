@@ -103,4 +103,27 @@ model users {
   role          String            @default("colaborador") @db.VarChar(20)
   created_at    DateTime?         @default(now()) @db.Timestamp(6)
   movements     stock_movements[]
+  password_reset_tokens password_reset_tokens[]
+}
+
+model password_reset_tokens {
+  id         Int       @id @default(autoincrement())
+  user_id    Int
+  token_hash String    @unique @db.VarChar(64)
+  expires_at DateTime  @db.Timestamp(6)
+  used_at    DateTime? @db.Timestamp(6)
+  created_at DateTime  @default(now()) @db.Timestamp(6)
+  user       users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+}
+
+/// Tabla de sesiones de connect-pg-simple (express-session). La app no la consulta vía Prisma
+/// salvo para cerrar sesiones de un usuario; está acá para que las migraciones no detecten drift.
+model session {
+  sid    String   @id @db.VarChar
+  sess   Json     @db.Json
+  expire DateTime @db.Timestamp(6)
+
+  @@index([expire], map: "IDX_session_expire")
 }

@@ -34,4 +34,23 @@ const me = (req, res) => {
   })
 }
 
-module.exports = { login, logout, me }
+// Responde siempre lo mismo, exista o no el email
+const forgotPassword = async (req, res) => {
+  try {
+    await authService.requestPasswordReset(req.body.email)
+    res.json({ success: true, data: null })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
+const resetPassword = async (req, res) => {
+  try {
+    await authService.resetPassword(req.body.token, req.body.password)
+    res.json({ success: true, data: null })
+  } catch (err) {
+    handleError(res, err)
+  }
+}
+
+module.exports = { login, logout, me, forgotPassword, resetPassword }

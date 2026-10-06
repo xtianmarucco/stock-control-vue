@@ -57,4 +57,4 @@ const remove = async (id, currentUserId) => {
   return repo.remove(id)
 }
 
-module.exports = { getAll, getById, create, update, remove }
+module.exports = { getAll, getById, create, update, remove, isValidEmail }

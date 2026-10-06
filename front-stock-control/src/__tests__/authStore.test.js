@@ -6,9 +6,17 @@ vi.mock('../services/AuthService', () => ({
   login: vi.fn(),
   logout: vi.fn(),
   getMe: vi.fn(),
+  forgotPassword: vi.fn(),
+  resetPassword: vi.fn(),
 }))
 
-import { login as apiLogin, logout as apiLogout, getMe } from '../services/AuthService'
+import {
+  login as apiLogin,
+  logout as apiLogout,
+  getMe,
+  forgotPassword as apiForgotPassword,
+  resetPassword as apiResetPassword,
+} from '../services/AuthService'
 
 const mockUser = { id: 1, email: 'admin@heladeria.com', full_name: 'Admin', role: 'admin' }
 
@@ -91,5 +99,40 @@ describe('logout', () => {
     store.user = mockUser
     await store.logout()
     expect(store.user).toBeNull()
+  })
+})
+
+// ---------------------------------------------------------------------------
+describe('action: forgotPassword', () => {
+  it('llama al servicio con el email', async () => {
+    apiForgotPassword.mockResolvedValue()
+    const store = useAuthStore()
+    await store.forgotPassword('admin@heladeria.com')
+    expect(apiForgotPassword).toHaveBeenCalledWith('admin@heladeria.com')
+  })
+
+  it('loading vuelve a false aunque falle', async () => {
+    apiForgotPassword.mockRejectedValue(new Error('Network error'))
+    const store = useAuthStore()
+    await expect(store.forgotPassword('admin@heladeria.com')).rejects.toThrow()
+    expect(store.loading).toBe(false)
+  })
+})
+
+// ---------------------------------------------------------------------------
+describe('action: resetPassword', () => {
+  it('llama al servicio con token y contraseña sin loguear al usuario', async () => {
+    apiResetPassword.mockResolvedValue()
+    const store = useAuthStore()
+    await store.resetPassword('mi-token', 'password123')
+    expect(apiResetPassword).toHaveBeenCalledWith('mi-token', 'password123')
+    expect(store.isAuthenticated).toBe(false)
+  })
+
+  it('loading vuelve a false aunque falle', async () => {
+    apiResetPassword.mockRejectedValue(new Error('Invalid token'))
+    const store = useAuthStore()
+    await expect(store.resetPassword('viejo', 'password123')).rejects.toThrow()
+    expect(store.loading).toBe(false)
   })
 })

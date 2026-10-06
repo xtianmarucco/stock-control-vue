@@ -9,6 +9,18 @@ const routes = [
     meta: { public: true }
   },
   {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: () => import('../views/ForgotPasswordView.vue'),
+    meta: { public: true }
+  },
+  {
+    path: '/reset-password',
+    name: 'ResetPassword',
+    component: () => import('../views/ResetPasswordView.vue'),
+    meta: { public: true }
+  },
+  {
     path: '/',
     redirect: '/dashboard'
   },
