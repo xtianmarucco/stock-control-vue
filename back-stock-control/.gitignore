@@ -24,3 +24,8 @@ dist-ssr
 *.sw?
 
 /src/generated/prisma
+
+# Variables de entorno (contienen secretos)
+.env
+.env.*
+!.env.example
