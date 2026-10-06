@@ -205,20 +205,20 @@ describe('validateStep2 — navegación al paso 2', () => {
     const wrapper = mountModal()
     await flushPromises()
     await goToStep1(wrapper)
-    state(wrapper).draft.items = [{ product_id: null, quantity_input: 5, quantity_unit: 'UNIDAD' }]
+    state(wrapper).draft.items = [{ product_id: null, qty_unidades: 5 }]
     await wrapper.findAll('button').find(b => b.text().includes('Siguiente')).trigger('click')
     await wrapper.vm.$nextTick()
     expect(wrapper.text()).toContain('sin producto seleccionado')
   })
 
-  it('muestra error si la cantidad es 0 o negativa', async () => {
+  it('muestra error si no se ingresó ninguna cantidad', async () => {
     const wrapper = mountModal()
     await flushPromises()
     await goToStep1(wrapper)
-    state(wrapper).draft.items = [{ product_id: 1, quantity_input: 0, quantity_unit: 'UNIDAD', product_name: 'Helado' }]
+    state(wrapper).draft.items = [{ product_id: 1, product_name: 'Helado', qty_bultos: null, qty_cajas: null, qty_unidades: 0 }]
     await wrapper.findAll('button').find(b => b.text().includes('Siguiente')).trigger('click')
     await wrapper.vm.$nextTick()
-    expect(wrapper.text()).toContain('mayor a cero')
+    expect(wrapper.text()).toContain('Ingresá al menos una cantidad para "Helado"')
   })
 
   it('muestra error de stock insuficiente en TRANSFER', async () => {
@@ -227,7 +227,7 @@ describe('validateStep2 — navegación al paso 2', () => {
     await goToStep1(wrapper)
     state(wrapper).draft.items = [{
       product_id: 1, product_name: 'Helado',
-      quantity_input: 50, quantity_unit: 'UNIDAD',
+      qty_unidades: 50,
       available_stock: 10, unidades_x_pack: 12,
     }]
     await wrapper.findAll('button').find(b => b.text().includes('Siguiente')).trigger('click')
@@ -241,7 +241,7 @@ describe('validateStep2 — navegación al paso 2', () => {
     await goToStep1(wrapper)
     state(wrapper).draft.items = [{
       product_id: 1, product_name: 'Helado',
-      quantity_input: 3, quantity_unit: 'UNIDAD',
+      qty_unidades: 3,
       available_stock: 100, unidades_x_pack: 12,
     }]
     await wrapper.findAll('button').find(b => b.text().includes('Siguiente')).trigger('click')
@@ -259,7 +259,7 @@ describe('submit', () => {
     // Ahora el watcher ya corrió — asignar el resto sin que se pisen
     state(wrapper).draft.from_branch_id = 1
     state(wrapper).draft.to_branch_id = 2
-    state(wrapper).draft.items = [{ product_id: 1, quantity_input: 3, quantity_unit: 'UNIDAD', available_stock: 100, unidades_x_pack: 12 }]
+    state(wrapper).draft.items = [{ product_id: 1, qty_unidades: 3, available_stock: 100, unidades_x_pack: 12 }]
     state(wrapper).currentStep = 2
     await wrapper.vm.$nextTick()
   }
@@ -300,34 +300,43 @@ describe('submit', () => {
 
 // ---------------------------------------------------------------------------
 describe('toUnidades — conversión de cantidades', () => {
-  it('retorna la cantidad directa en modo UNIDAD', async () => {
+  it('retorna las unidades sueltas tal cual', async () => {
     const wrapper = mountModal()
     await flushPromises()
-    expect(state(wrapper).toUnidades({ quantity_input: 5, quantity_unit: 'UNIDAD' })).toBe(5)
+    expect(state(wrapper).toUnidades({ qty_unidades: 5 })).toBe(5)
   })
 
-  it('retorna null si quantity_input es 0', async () => {
+  it('retorna null si no hay ninguna cantidad', async () => {
     const wrapper = mountModal()
     await flushPromises()
-    expect(state(wrapper).toUnidades({ quantity_input: 0, quantity_unit: 'UNIDAD' })).toBeNull()
+    expect(state(wrapper).toUnidades({ qty_bultos: null, qty_cajas: null, qty_unidades: 0 })).toBeNull()
   })
 
-  it('convierte BULTO a unidades usando unidades_x_pack', async () => {
+  it('convierte bultos a unidades usando unidades_x_pack', async () => {
     const wrapper = mountModal()
     await flushPromises()
-    expect(state(wrapper).toUnidades({ quantity_input: 2, quantity_unit: 'BULTO', unidades_x_pack: 12 })).toBe(24)
+    expect(state(wrapper).toUnidades({ qty_bultos: 2, unidades_x_pack: 12 })).toBe(24)
   })
 
-  it('convierte CAJA a unidades usando unidades_x_caja', async () => {
+  it('convierte cajas a unidades usando unidades_x_caja', async () => {
     const wrapper = mountModal()
     await flushPromises()
-    expect(state(wrapper).toUnidades({ quantity_input: 3, quantity_unit: 'CAJA', unidades_x_caja: 6 })).toBe(18)
+    expect(state(wrapper).toUnidades({ qty_cajas: 3, unidades_x_caja: 6 })).toBe(18)
   })
 
-  it('retorna null si CAJA no tiene unidades_x_caja definido', async () => {
+  it('suma bultos, cajas y unidades del mismo renglón', async () => {
     const wrapper = mountModal()
     await flushPromises()
-    expect(state(wrapper).toUnidades({ quantity_input: 2, quantity_unit: 'CAJA', unidades_x_caja: null })).toBeNull()
+    expect(state(wrapper).toUnidades({
+      qty_bultos: 1, qty_cajas: 2, qty_unidades: 5,
+      unidades_x_pack: 24, unidades_x_caja: 6,
+    })).toBe(41)
+  })
+
+  it('retorna null si solo hay cajas y el producto no tiene unidades_x_caja', async () => {
+    const wrapper = mountModal()
+    await flushPromises()
+    expect(state(wrapper).toUnidades({ qty_cajas: 2, unidades_x_caja: null })).toBeNull()
   })
 })
 
